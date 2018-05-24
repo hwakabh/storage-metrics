@@ -10,11 +10,32 @@ def main():
     print('Before : ' +str(len(container_list)))
 
     print('==== Creating postgres container....')
-    c1 = client.create_container(image='postgres:latest', detach=True, name='docker_py_test_pg')
+    c = client.create_container(image='postgres:latest', detach=True)
     print('==== Starting postgres container....')
-    client.start(c1)
+    client.start(c)
     container_list = client.containers()
     print('After : ' +str(len(container_list)))
+
+    # show running containers
+    container_ids = []
+    for i in range(len(container_list)):
+        print('ContainerID : ' + str(container_list[i]['Id']) + ' ||| ContainerName : ' + str(container_list[i]['Names']))
+        container_ids.append(str(container_list[i]['Id']))
+
+    # Stop all containers
+    for container_id in container_ids:
+        client.stop(container=container_id)
+    container_list = client.containers()
+    print('After : ' +str(len(container_list)))
+
+    # Remove all containers(Force stopped)
+    container_list = client.containers(all=True)
+    container_ids = []
+    for i in range(len(container_list)):
+        print('ContainerID : ' + str(container_list[i]['Id']) + ' ||| ContainerName : ' + str(container_list[i]['Names']))
+        container_ids.append(str(container_list[i]['Id']))
+    for container_id in container_ids:
+        client.remove_container(container=container_id, force=True)
 
 
 if __name__ == '__main__':
