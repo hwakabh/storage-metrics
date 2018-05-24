@@ -1,7 +1,6 @@
 {
   "MaxRunning" : 3,
   "Timeout":100000,
-
   "XtremIO": {
     "username": "admin",
     "password": "Xtrem10",
@@ -22,7 +21,7 @@
   "port" : 9200,
   "index" : {
       "XtremIO" : "xtremio",
-      "Isilon" : "isilon",
+      "Isilon" : "isilon"
   }
   },
   "Postgres":{
