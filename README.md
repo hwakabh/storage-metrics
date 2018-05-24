@@ -15,9 +15,10 @@
   - DellEMC XtremIO
 
 ## Containers
-- ElasticSearch
 - Kibana
+- ElasticSearch
 - Postgres
+- RabbitMQ
 - Python
 - CentOS Linux
 
