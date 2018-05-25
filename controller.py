@@ -37,28 +37,34 @@ class Common:
         # Checking for avoiding name conflict
         running_containers = self.get_containers(isall=False)
         if cname in running_containers:
-            print('LOGGER>>> Could not start container because ' + strmark + ' container is already running with same name as ' + cname)
+            print('LOGGER>>> Could not start container '
+                  'because ' + strmark + ' container is already running with same name as ' + cname)
         else:
             all_containers = self.get_containers(isall=True)
             if cname in all_containers:
-                print('LOGGER>>> Could not start container because ' + strmark + ' container was not removed with same name as ' + cname)
+                print('LOGGER>>> Could not start container '
+                      'because ' + strmark + ' container was not removed with same name as ' + cname)
             else:
                 # case if no name conflict
                 image_name = strmark + ':latest'
-                print('LOGGER>>> Creating ' + strmark + ' containers and starting it ...')
+                print('LOGGER>>> Creating ' + strmark + ' container and starting it ...')
                 c = None
                 try:
-                    c = self.client.create_container(image=image_name, detach=True, name=cname)
+                    # TODO: consider case if container bind-port by container name
+                    hostports = param.mq_ports
+                    hostconfig = self.client.create_host_config(port_bindings=param.mq_portmap)
+
+                    c = self.client.create_container(image=image_name, detach=True, name=cname, ports=hostports, host_config=hostconfig)
                     print('LOGGER>>> ' + strmark + ' container successfully created.')
                 except Exception as e:
                     print('LOGGER>>> Error when creating ' + strmark + 'containers...')
                     print('Errors : ', e.args)
                 try:
                     self.client.start(c)
+                    print('LOGGER>>> ' + strmark + ' container started.')
                 except Exception as e:
                     print('LOGGER>>> Error when starting ' + strmark + 'containers...')
                     print('Errors : ', e.args)
-                print('LOGGER>>> ' + strmark + ' container started.')
 
     # Delete container by name(strmark)
     def kill_container(self, strmark, isremove):
@@ -83,12 +89,12 @@ def main():
         print('LOGGER>>> Error when instantiate docker class.')
         print('Errors : ', e.args)
 
-    # --- start postgres
-    print('LOGGER>>> Starting postgres container...')
+    # # --- start postgres
+    print('LOGGER>>> Launching postgres container...')
     d.launch_container(strmark='postgres',cname=param.pg_cname)
 
     # --- start rabbitmq
-    print('LOGGER>>> Starting RabbitMQ container...')
+    print('LOGGER>>> Launching RabbitMQ container...')
     d.launch_container(strmark='rabbitmq',cname=param.mq_cname)
 
     # --- start rabbit_monitor

@@ -32,12 +32,16 @@ index = {
 }
 # -- For Postgres
 pg_address = '10.62.130.166'
-pg_port = 5432  # pg_port = {'5432':32768}
+pg_ports = [5432,]
+# pg_portmap = {5432: 32768}
+pg_portmap = {5432: 5432}
 pg_srcimg = 'postgres:latest'
 pg_cname = 'smetric_postgres'
 # -- For RabbitMQ
 mq_address = '10.62.130.166'
-mq_ports = [25672, 5672, 5671, 4369]     # mq_ports = {'25672':32776, '5672':32777, '5671':32778, '4369':32779}
+mq_ports = [25672, 5672, 5671, 4369]
+# mq_portmap = {25672: 32776, 5672: 32777, 5671: 32778, 4369: 32779}
+mq_portmap = {25672: 25672, 5672: 5672, 5671: 5671, 4369: 4369}
 mq_srcimg = 'rabbitmq:latest'
 mq_channel = 'smetric_queue'
 mq_cname = 'smetric_rabbitmq'
