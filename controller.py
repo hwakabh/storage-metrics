@@ -33,7 +33,29 @@ class Dockerengine:
             print('FOR_DEBUG>>> Container seems to be not existed ...')
             return None
 
-    def launch_container(self, strmark, cname):
+    def launch_container(self, strmark):
+        hostports = ''
+        hostconfig = ''
+        image_name = ''
+        cname = 'smetrics_' + strmark
+
+        if strmark == 'postgres':
+            image_name = strmark + ':latest'
+            hostports = param.pg_ports
+            hostconfig = self.client.create_host_config(port_bindings=param.pg_portmap)
+        elif strmark == 'rabbitmq':
+            image_name = strmark + ':latest'
+            hostports = param.mq_ports
+            hostconfig = self.client.create_host_config(port_bindings=param.mq_portmap)
+        elif strmark == 'elasticsearch':
+            image_name = strmark + ':latest'
+            hostports = param.es_ports
+            hostconfig = self.client.create_host_config(port_bindings=param.es_portmap)
+        elif strmark == 'xtremio':
+            image_name = param.xtremio_imgname
+        elif strmark == 'isilon':
+            image_name = param.isilon_imgname
+
         # Checking for avoiding name conflict
         running_containers = self.get_containers(isall=False)
         if cname in running_containers:
@@ -46,14 +68,9 @@ class Dockerengine:
                       'because ' + strmark + ' container was not removed with same name as ' + cname)
             else:
                 # case if no name conflict
-                image_name = strmark + ':latest'
                 print('LOGGER>>> Creating ' + strmark + ' container and starting it ...')
                 c = None
                 try:
-                    # TODO: consider case if container bind-port by container name
-                    hostports = param.mq_ports
-                    hostconfig = self.client.create_host_config(port_bindings=param.mq_portmap)
-
                     c = self.client.create_container(image=image_name, detach=True, name=cname, ports=hostports, host_config=hostconfig)
                     print('LOGGER>>> ' + strmark + ' container successfully created.')
                 except Exception as e:
@@ -66,7 +83,6 @@ class Dockerengine:
                     print('LOGGER>>> Error when starting ' + strmark + 'containers...')
                     print('Errors : ', e.args)
 
-    # Delete container by name(strmark)
     def kill_container(self, strmark, isremove):
         container_id = self.get_container_id(strmark)
         if isremove:
@@ -91,11 +107,11 @@ def main():
 
     # # # --- start postgres
     print('LOGGER>>> Launching postgres container...')
-    d.launch_container(strmark='postgres',cname=param.pg_cname)
+    d.launch_container(strmark='postgres')
 
     # --- start rabbitmq
     print('LOGGER>>> Launching RabbitMQ container...')
-    d.launch_container(strmark='rabbitmq',cname=param.mq_cname)
+    d.launch_container(strmark='rabbitmq')
 
     # --- start rabbit_monitor
 

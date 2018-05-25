@@ -17,7 +17,6 @@ pg_ports = [5432,]
 # pg_portmap = {5432: 32768}
 pg_portmap = {5432: 5432}
 pg_srcimg = 'postgres:latest'
-pg_cname = 'smetric_postgres'
 
 # -- For RabbitMQ
 mq_address = '10.62.130.166'
@@ -26,11 +25,11 @@ mq_ports = [25672, 5672, 5671, 4369, 15672]
 mq_portmap = {25672: 25672, 5672: 5672, 5671: 5671, 4369: 4369, 15672: 15672}
 mq_srcimg = 'rabbitmq:latest'
 mq_quename = 'smetric_queue'
-mq_cname = 'smetric_rabbitmq'
 
 # -- For ElasticSearch
 es_address = '10.62.130.166'
-es_port = 9200
+es_ports = [9200,]
+es_portmap = {9200:9200}
 index = {
     'xtremio':'xtremio',
     'isilon':'isilon'
