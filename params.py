@@ -8,8 +8,6 @@ docker_api_version = '1.37'
 max_running = 3
 timeout = 100000
 
-# -- For Controller
-container_status = ['RUNNING', 'ERROR', 'COMPLETE', 'NOTREADY']
 
 # -- For Postgres
 pg_address = '10.62.130.166'

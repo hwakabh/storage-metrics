@@ -7,6 +7,7 @@ import params as param
 class Consumer:
     def __init__(self):
         self.rabbit_ip = param.mq_address
+        self.receive_message()
 
     def receive_message(self):
         connection = pika.BlockingConnection(pika.ConnectionParameters(host=self.rabbit_ip))
@@ -29,10 +30,14 @@ class Consumer:
             print('Errors : ', e.args)
 
 
-def main():
-    rabbit = Consumer()
-    rabbit.receive_message()
+class TaskState:
+    def __init__(self):
+        # container_status = ['RUNNING', 'ERROR', 'COMPLETE', 'NOTREADY']
+        self.xtermioc_status = 'NOTREADY'
+        self.isilonc_status = 'NOTREADY'
 
 
 if __name__ == '__main__':
-    main()
+    # rabbit = Consumer()
+    # rabbit.receive_message()
+    print('Executed by python console...')

@@ -2,6 +2,8 @@
 # http://docker-py.readthedocs.io/en/stable/api.html#module-docker.api.container
 import docker
 import params as param
+from rabbit_monitor import Consumer
+from rabbit_monitor import TaskState
 
 
 class Dockerengine:
@@ -93,6 +95,17 @@ class Dockerengine:
             self.client.stop(container=container_id)
 
 
+def start_message_monitor():
+    rabbit = Consumer()
+
+
+def initialize_collector_status():
+    ts = TaskState()
+    print(ts.xtermioc_status)
+    print(ts.isilonc_status)
+
+
+
 def main():
     # --- starting controller
     print('LOGGER>>> Controller started by \'python controller.py\'')
@@ -113,9 +126,11 @@ def main():
     print('LOGGER>>> Launching RabbitMQ container...')
     d.launch_container(strmark='rabbitmq')
 
-    # --- start rabbit_monitor
+    # # --- start rabbit_monitor
+    # start_message_monitor()
 
     # --- initialize task-status of each collector
+    initialize_collector_status()
 
     # --- start xtremio_collector(data collected would be inserted to postgres by each collector)
 
