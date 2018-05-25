@@ -2,15 +2,15 @@
 # http://docker-py.readthedocs.io/en/stable/api.html#module-docker.api.container
 import docker
 
+import params as param
+
 
 class Common:
     def __init__(self):
-        # Loading config.json file and set them to class properties
-        # Error handle if config.json not existed
-        self.docker_host = '10.0.10.100'
-        self.docker_port = 2375
-        self.docker_api_version = '1.37'
-        self.target = 'tcp://' + self.docker_host + ':' + str(self.docker_port)
+        self.docker_ip = param.docker_ip
+        self.docker_port = param.docker_port
+        self.docker_api_version = param.docker_api_version
+        self.target = 'tcp://' + self.docker_ip + ':' + str(self.docker_port)
         self.client = docker.APIClient(base_url=self.target, tls=False, version=self.docker_api_version)
 
     def get_containers(self, isall):

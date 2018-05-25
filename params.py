@@ -1,6 +1,14 @@
 # Configuration parameters for each components
 # TODO: Add port-mapping for docker-engine
 
+# For Remote Docker engine
+docker_ip = '10.62.130.166'
+docker_port = 2375
+docker_api_version = '1.37'
+
+max_running = 3
+timeout = 100000
+
 # -- For XtremIO
 xtremio_user = 'admin'
 xtermio_pass = 'Xtrem10'
@@ -31,6 +39,3 @@ mq_ports = [25672, 5672, 5671, 4369]     # mq_ports = {'25672':32776, '5672':327
 mq_srcimg = 'rabbitmq:latest'
 mq_channel = 'smetric_queue'
 
-# For Docker engine
-max_running = 3
-timeout = 100000
