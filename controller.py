@@ -105,7 +105,7 @@ def main():
         print('LOGGER>>> Error when instantiate docker class.')
         print('Errors : ', e.args)
 
-    # # # --- start postgres
+    # --- start postgres
     print('LOGGER>>> Launching postgres container...')
     d.launch_container(strmark='postgres')
 
