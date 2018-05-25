@@ -15,12 +15,9 @@ class Common:
     def get_containers(self, isall):
         if isall:
             container_list = self.client.containers(all=True)
-            msg = 'FOR_DEBUG>>> Listing up ALL containers on Remote Docker Engine...'
         else:
             container_list = self.client.containers()
-            msg = 'FOR_DEBUG>>> Listing up containers RUNNING on Remote Docker Engine...'
 
-        print(msg)
         container_ids = {}
         for i in range(len(container_list)):
             container_ids[str(container_list[i]['Names'][0]).replace('/','')] = str(container_list[i]['Id'])
@@ -37,10 +34,31 @@ class Common:
             return None
 
     def launch_container(self, strmark, cname):
-        image_name = strmark + ':latest'
-        print('>>> Creating ' + strmark + ' containers and starting it ...')
-        c = self.client.create_container(image=image_name, detach=True, name=cname)
-        self.client.start(c)
+        # Checking for avoiding name conflict
+        running_containers = self.get_containers(isall=False)
+        if cname in running_containers:
+            print('LOGGER>>> Could not start container because ' + strmark + ' container is already running with same name as ' + cname)
+        else:
+            all_containers = self.get_containers(isall=True)
+            if cname in all_containers:
+                print('LOGGER>>> Could not start container because ' + strmark + ' container was not removed with same name as ' + cname)
+            else:
+                # case if no name conflict
+                image_name = strmark + ':latest'
+                print('LOGGER>>> Creating ' + strmark + ' containers and starting it ...')
+                c = None
+                try:
+                    c = self.client.create_container(image=image_name, detach=True, name=cname)
+                    print('LOGGER>>> ' + strmark + ' container successfully created.')
+                except Exception as e:
+                    print('LOGGER>>> Error when creating ' + strmark + 'containers...')
+                    print('Errors : ', e.args)
+                try:
+                    self.client.start(c)
+                except Exception as e:
+                    print('LOGGER>>> Error when starting ' + strmark + 'containers...')
+                    print('Errors : ', e.args)
+                print('LOGGER>>> ' + strmark + ' container started.')
 
     # Delete container by name(strmark)
     def kill_container(self, strmark, isremove):
@@ -54,6 +72,9 @@ class Common:
 
 
 def main():
+    # --- starting controller
+    print('LOGGER>>> Controller started by \'python controller.py\'')
+
     # --- Instantiate docker class
     d = None
     try:
@@ -63,22 +84,12 @@ def main():
         print('Errors : ', e.args)
 
     # --- start postgres
-    try:
-        print('LOGGER>>> Starting postgres container...')
-        d.launch_container(strmark='postgres',cname=param.pg_cname)
-        print('LOGGER>>> Postgres container started.')
-    except Exception as e:
-        print('LOGGER>>> Error when starting postgres container.')
-        print('Errors : ', e.args)
+    print('LOGGER>>> Starting postgres container...')
+    d.launch_container(strmark='postgres',cname=param.pg_cname)
 
     # --- start rabbitmq
-    try:
-        print('LOGGER>>> Starting RabbitMQ container...')
-        d.launch_container(strmark='rabbitmq',cname=param.mq_cname)
-        print('LOGGER>>> RabbitMQ container started.')
-    except Exception as e:
-        print('LOGGER>>> Error when starting RabbitMQ container.')
-        print('Errors : ', e.args)
+    print('LOGGER>>> Starting RabbitMQ container...')
+    d.launch_container(strmark='rabbitmq',cname=param.mq_cname)
 
     # --- start rabbit_monitor
 
