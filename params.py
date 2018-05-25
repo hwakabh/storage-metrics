@@ -1,5 +1,4 @@
 # Configuration parameters for each components
-# TODO: Add port-mapping for docker-engine
 
 # For Remote Docker engine
 docker_ip = '10.62.130.166'
@@ -8,6 +7,9 @@ docker_api_version = '1.37'
 
 max_running = 3
 timeout = 100000
+
+# -- For Controller
+container_status = ['RUNNING', 'ERROR', 'COMPLETE', 'NOTREADY']
 
 # -- For XtremIO
 xtremio_user = 'admin'
@@ -38,4 +40,5 @@ mq_address = '10.62.130.166'
 mq_ports = [25672, 5672, 5671, 4369]     # mq_ports = {'25672':32776, '5672':32777, '5671':32778, '4369':32779}
 mq_srcimg = 'rabbitmq:latest'
 mq_channel = 'smetric_queue'
+mq_cname = 'smetric_rabbitmq'
 

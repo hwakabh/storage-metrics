@@ -1,7 +1,6 @@
 # to manage remote docker host, use APIClient class in docker-py, not docker.from_env()
 # http://docker-py.readthedocs.io/en/stable/api.html#module-docker.api.container
 import docker
-
 import params as param
 
 
@@ -37,11 +36,10 @@ class Common:
             print('FOR_DEBUG>>> Container seems to be not existed ...')
             return None
 
-    def create_container(self, strmark):
+    def launch_container(self, strmark, cname):
         image_name = strmark + ':latest'
         print('>>> Creating ' + strmark + ' containers and starting it ...')
-        # Currently container name is generated randomly
-        c = self.client.create_container(image=image_name, detach=True)
+        c = self.client.create_container(image=image_name, detach=True, name=cname)
         self.client.start(c)
 
     # Delete container by name(strmark)
