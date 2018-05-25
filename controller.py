@@ -4,7 +4,7 @@ import docker
 import params as param
 
 
-class Common:
+class Dockerengine:
     def __init__(self):
         self.docker_ip = param.docker_ip
         self.docker_port = param.docker_port
@@ -84,12 +84,12 @@ def main():
     # --- Instantiate docker class
     d = None
     try:
-        d = Common()
+        d = Dockerengine()
     except Exception as e:
         print('LOGGER>>> Error when instantiate docker class.')
         print('Errors : ', e.args)
 
-    # # --- start postgres
+    # # # --- start postgres
     print('LOGGER>>> Launching postgres container...')
     d.launch_container(strmark='postgres',cname=param.pg_cname)
 
