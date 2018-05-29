@@ -34,6 +34,7 @@ index = {
 }
 
 # -- For XtremIO
+xtremio_address = '10.32.210.156'
 xtremio_user = 'admin'
 xtermio_pass = 'Xtrem10'
 xtremio_imgname = 'smetric/xtremiocollector'
@@ -41,8 +42,9 @@ xtermio_clogpath = '/var/log/collector/xtremio'
 xtermio_hlogpath = '/home/smetric/log/xtremio'
 
 # -- For Isilon
+isilon_address = '10.32.239.181'
 isilon_user = 'root'
-isilon_pass = 'a'
+isilon_pass = 'nasadmin'
 isilon_imgname = 'smetric/isiloncollector'
 isilon_clogpath = '/var/log/collector/isilon'
 isilon_hlogpath = '/home/smetric/log/isilon'
