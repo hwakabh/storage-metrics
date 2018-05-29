@@ -27,6 +27,26 @@ def send_message(msg):
     return return_value
 
 
+def get_http_response():
+    pass
+
+
+def get_postgres_connection():
+    pass
+
+
+def run_sql_query():
+    pass
+
+
+def create_table():
+    pass
+
+
+def send_data_to_postgres():
+    pass
+
+
 def main():
     send_message('postgres_Start')
     send_message('rabbit_Start')
