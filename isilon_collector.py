@@ -8,14 +8,18 @@ global str_password
 
 def get_isilon_information(ip, user, passwd):
     uri = 'https://' + ip + ':8080' + '/platform/1/cluster/config'
-    ret = common.get_https_response_with_json(user, passwd, uri)
-    print('S/N : ' + ret['local_serial'])
-    print('Cluster Name : ' + ret['name'])
-    print('OneFS Version : ' + ret['onefs_version']['release'] + ' <<Build : ' + ret['onefs_version']['build'] + '>>')
-    print('Nodes count : ' + str(len(ret['devices'])))
-    print('Nodes information : ')
-    for d in ret['devices']:
-        print('DeviceID : ' + str(d['devid']) + ' <<GUID : ' + d['guid'] + '>>')
+    try:
+        ret = common.get_https_response_with_json(user, passwd, uri)
+        print('S/N : ' + ret['local_serial'])
+        print('Cluster Name : ' + ret['name'])
+        print('OneFS Version : ' + ret['onefs_version']['release'] + ' <<Build : ' + ret['onefs_version']['build'] + '>>')
+        print('Nodes count : ' + str(len(ret['devices'])))
+        print('Nodes information : ')
+        for d in ret['devices']:
+            print('DeviceID : ' + str(d['devid']) + ' <<GUID : ' + d['guid'] + '>>')
+    except Exception:
+        print('ISILON_LOGGER>>> Exception is throwed by common function. '
+              'Error when getting information from Isilon ...')
 
 
 def main():
