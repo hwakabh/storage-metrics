@@ -14,6 +14,9 @@ pg_address = '10.62.130.166'
 pg_ports = [5432,]
 # pg_portmap = {5432: 32768}
 pg_portmap = {5432: 5432}
+pg_username = 'postgres'
+pg_password = 'postgres'
+pg_database = 'postgres'
 pg_srcimg = 'postgres:latest'
 
 # -- For RabbitMQ
