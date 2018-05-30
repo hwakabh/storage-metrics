@@ -100,6 +100,8 @@ class Collector:
                 print('Errors : ', e.args)
         return return_value
 
+    def send_data_to_postgres(self, map):
+        pass
 
 # Utilities
 def convert_to_json(rbody):
