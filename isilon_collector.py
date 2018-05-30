@@ -57,13 +57,17 @@ def main():
                        ', ifs_bytes_used bigint' + \
                        ', ifs_percent_used double precision' + \
                        ', ifs_bytes_free bigint' + \
-                       ', ifs_percent_total double precision)'
+                       ', ifs_percent_free double precision)'
     isilon_collector.create_capacity_table(capacity_columns)
 
     # Get capacity information
-    uri = 'https://' + str_ipaddress + ':8080' + '/platform/1/cluster/config'
-    ret = get_https_response_with_json(str_username, str_password, uri)
-    print(ret)
+    capacity_keys = ('ifs.bytes.total', 'ifs.bytes.used', 'ifs.percent.used', 'ifs.bytes.free', 'ifs.percent.free', )
+    c_results = {}
+    for k in capacity_keys:
+        uri = 'https://' + str_ipaddress + ':8080' + '/platform/1/statistics/current?key=' + k
+        ret = get_https_response_with_json(str_username, str_password, uri)
+        c_results[k] = ret['stats'][0]['value']
+    print(c_results)
 
     # Insert capacity information to postgres
     # common.send_data_to_postgres()
