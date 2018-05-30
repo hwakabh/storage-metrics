@@ -8,8 +8,14 @@ global str_password
 
 def get_isilon_information(ip, user, passwd):
     uri = 'https://' + ip + ':8080' + '/platform/1/cluster/config'
-    res = common.get_https_response_with_json(user, passwd, uri)
-    print(res)
+    ret = common.get_https_response_with_json(user, passwd, uri)
+    print('S/N : ' + ret['local_serial'])
+    print('Cluster Name : ' + ret['name'])
+    print('OneFS Version : ' + ret['onefs_version']['release'] + ' <<Build : ' + ret['onefs_version']['build'] + '>>')
+    print('Nodes count : ' + str(len(ret['devices'])))
+    print('Nodes information : ')
+    for d in ret['devices']:
+        print('DeviceID : ' + str(d['devid']) + ' <<GUID : ' + d['guid'] + '>>')
 
 
 def main():
@@ -23,6 +29,7 @@ def main():
     # Getting General isilon Information
     # TODO: Considering Looping for the case of multiple isilon
     print('ISILON_LOGGER>>> Target Isilon : ' + str_ipaddress)
+    print('ISILON_LOGGER>>> General Information : ')
     get_isilon_information(str_ipaddress, str_username, str_password)
 
     # Send message to rabbitmq

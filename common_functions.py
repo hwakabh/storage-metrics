@@ -1,7 +1,13 @@
 # common functions for each collector
 import pika
 import requests
+import json
 import params as param
+
+# To hide InsecureRequesetWarning in prompt
+import urllib3
+from urllib3.exceptions import InsecureRequestWarning
+urllib3.disable_warnings(InsecureRequestWarning)
 
 
 # RabbitMQ : each collector is 'Producer' and would 'publish(=Send)' message
@@ -28,6 +34,16 @@ def send_message(msg):
     return return_value
 
 
+def convert_to_json(rbody):
+    js = ''
+    try:
+        js = json.loads(rbody)
+    except Exception as e:
+        print('FOR_DEBUG>>> Some Error occurred when converting from String to JSON.')
+        print('Errors : ', e.args)
+    return js
+
+
 def get_https_response_with_json(username, password, url):
     # URL validation
     if 'https' in url:
@@ -37,28 +53,18 @@ def get_https_response_with_json(username, password, url):
         # TODO: Specify Exception if wrong URL
         raise Exception
 
-    # Initialize return value
-    r = None
-
+    rbody = ''
     # Run HTTP/HTTPS GET
     try:
         # verify=False for ignore SSL Certificate
         r = requests.get(url, auth=(username, password), verify=False)
-        if r.status_code == 200:
-            print('DEBUG>>> Return code 200, seems that Successfully GET content.')
-            return r.text
-        else:
-            print('DEBUG>>> Return code is not 200, Check the connectivity or credentials...')
+        print('FOR_DEBUG>>> Return code 200, seems that Successfully GET content.')
+        rbody = r.text
     except Exception as e:
-        print('DEBUG>>> Some Error occurred when getting HTTP/HTTPS response.')
+        print('FOR_DEBUG>>> Some Error occurred when getting HTTP/HTTPS response.')
         print('Errors : ', e.args)
-        return None
-    else:
-        return None
 
-
-def convert_to_json():
-    pass
+    return convert_to_json(rbody)
 
 
 def get_postgres_connection():
