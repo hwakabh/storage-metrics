@@ -40,31 +40,31 @@ def main():
     common.send_message('[tmp]Isilon_Start')
 
     # --- Run main task(capacity)
-    # Get capacity information
-    # common.get_https_response_with_json()
-
     # Create capacity table in postgres
     common.create_table()
+
+    # Get capacity information
+    # common.get_https_response_with_json()
 
     # Insert capacity information to postgres
     common.send_data_to_postgres()
 
     # --- Run main task(quota)
-    # Get quota information
-    # common.get_https_response_with_json()
-
     # Create quota table in postgres
     common.create_table()
+
+    # Get quota information
+    # common.get_https_response_with_json()
 
     # Insert quota information to postgres
     common.send_data_to_postgres()
 
     # --- Run main task(performance)
-    # Get performance information
-    # common.get_https_response_with_json()
-
     # Create performance table in postgres
     common.create_table()
+
+    # Get performance information
+    # common.get_https_response_with_json()
 
     # Insert performance information to postgres
     common.send_data_to_postgres()
