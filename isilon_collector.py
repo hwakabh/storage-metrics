@@ -1,27 +1,36 @@
 import common_functions as common
 import params as param
 
+global str_ipaddress
+global str_username
+global str_password
 
-def get_isilon_informations():
-    pass
+
+def get_isilon_information(ip, user, passwd):
+    uri = 'https://' + ip + ':8080' + '/platform/1/cluster/config'
+    res = common.get_https_response_with_json(user, passwd, uri)
+    print(res)
 
 
 def main():
     print('ISILON_LOGGER>>> Isilon Collector boots up...!!')
 
     # Setting parameters for target Isilon
-    # TODO: Considering Looping for the case of multiple isilon
     str_ipaddress = param.isilon_address
     str_username = param.isilon_user
     str_password = param.isilon_pass
+
+    # Getting General isilon Information
+    # TODO: Considering Looping for the case of multiple isilon
     print('ISILON_LOGGER>>> Target Isilon : ' + str_ipaddress)
+    get_isilon_information(str_ipaddress, str_username, str_password)
 
     # Send message to rabbitmq
-    common.send_message('[tmp]Start')
+    common.send_message('[tmp]Isilon_Start')
 
     # --- Run main task(capacity)
     # Get capacity information
-    common.get_http_response()
+    # common.get_https_response_with_json()
 
     # Create capacity table in postgres
     common.create_table()
@@ -31,7 +40,7 @@ def main():
 
     # --- Run main task(quota)
     # Get quota information
-    common.get_http_response()
+    # common.get_https_response_with_json()
 
     # Create quota table in postgres
     common.create_table()
@@ -41,7 +50,7 @@ def main():
 
     # --- Run main task(performance)
     # Get performance information
-    common.get_http_response()
+    # common.get_https_response_with_json()
 
     # Create performance table in postgres
     common.create_table()
@@ -50,7 +59,7 @@ def main():
     common.send_data_to_postgres()
 
     # Send message to rabbitmq
-    common.send_message('[tmp]End')
+    common.send_message('[tmp]Isilon_End')
 
     print('ISILON_LOGGER>>> Isilon Collector has done its task...!!')
 

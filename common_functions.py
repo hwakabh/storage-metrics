@@ -1,5 +1,6 @@
 # common functions for each collector
 import pika
+import requests
 import params as param
 
 
@@ -27,7 +28,36 @@ def send_message(msg):
     return return_value
 
 
-def get_http_response():
+def get_https_response_with_json(username, password, url):
+    # URL validation
+    if 'https' in url:
+        print('FOR DEBUG>>> Using HTTPS. GET from : ' + url)
+    else:
+        print('FOR DEBUG>>> URL seems to be wrong with : ' + url)
+        # TODO: Specify Exception if wrong URL
+        raise Exception
+
+    # Initialize return value
+    r = None
+
+    # Run HTTP/HTTPS GET
+    try:
+        # verify=False for ignore SSL Certificate
+        r = requests.get(url, auth=(username, password), verify=False)
+        if r.status_code == 200:
+            print('DEBUG>>> Return code 200, seems that Successfully GET content.')
+            return r.text
+        else:
+            print('DEBUG>>> Return code is not 200, Check the connectivity or credentials...')
+    except Exception as e:
+        print('DEBUG>>> Some Error occurred when getting HTTP/HTTPS response.')
+        print('Errors : ', e.args)
+        return None
+    else:
+        return None
+
+
+def convert_to_json():
     pass
 
 
