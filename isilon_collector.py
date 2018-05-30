@@ -53,7 +53,7 @@ def main():
                        ', ifs_percent_used double precision' + \
                        ', ifs_bytes_free bigint' + \
                        ', ifs_percent_free double precision)'
-    isilon_collector.create_capacity_table(capacity_columns)
+    isilon_collector.create_table(type='capacity', columns=capacity_columns)
 
     # add cluster_name and timestamp before applying https results
     c_results = {}
@@ -69,12 +69,12 @@ def main():
     print(c_results)
 
     # Insert capacity information to postgres
-    isilon_collector.send_data_to_postgres(c_results)
+    isilon_collector.send_data_to_postgres(data=c_results, data_type='capacity')
 
     # --- Run main task(quota)
     # Create quota table in postgres
     quota_columns = '(qid varchar, qusername varchar, qpassword varchar)'
-    isilon_collector.create_quota_table(quota_columns)
+    isilon_collector.create_table(type='quota', columns=quota_columns)
 
     # Get quota information
     # common.get_https_response_with_json()
@@ -85,7 +85,7 @@ def main():
     # --- Run main task(performance)
     # Create performance table in postgres
     perf_columns = '(pfid varchar, pfsername varchar, pfpassword varchar)'
-    isilon_collector.create_performance_table(perf_columns)
+    isilon_collector.create_table(type='performance', columns=perf_columns)
 
     # Get performance information
     # common.get_https_response_with_json()

@@ -59,23 +59,11 @@ class Collector:
     def __init__(self, strmark):
         self.strmark = strmark
 
-    def create_capacity_table(self, columns):
-        table_name = self.strmark + '_capacity_table'
-        print(self.strmark + '_LOGGER>>> Creating capacity tables on Postgres ...')
+    def create_table(self, type, columns):
+        table_name = self.strmark + '_' + type + '_table'
+        print(self.strmark + '_LOGGER>>> Creating ' + type + ' table on Postgres ...')
         create_table(table_name, columns)
-        print(self.strmark + '_LOGGER>>> Creating capacity tables on Postgres ...')
-
-    def create_quota_table(self, columns):
-        table_name = self.strmark + '_quota_table'
-        print(self.strmark + '_LOGGER>>> Creating quota tables on Postgres ...')
-        create_table(table_name, columns)
-        print(self.strmark + '_LOGGER>>> Creating quota tables Done.')
-
-    def create_performance_table(self, columns):
-        table_name = self.strmark + '_performance_table'
-        print(self.strmark + '_LOGGER>>> Creating performance tables on Postgres ...')
-        create_table(table_name, columns)
-        print(self.strmark + '_LOGGER>>> Creating performance tables Done.')
+        print(self.strmark + '_LOGGER>>> Creating ' + type + ' table on Postgres ...')
 
     # RabbitMQ : each collector is 'Producer' and would 'publish(=Send)' message
     def send_message(self, msg):
@@ -100,8 +88,13 @@ class Collector:
                 print('Errors : ', e.args)
         return return_value
 
-    def send_data_to_postgres(self, map):
-        pass
+    def send_data_to_postgres(self, data, data_type):
+        # data_type = capacity, quota, performance
+        table_name = self.strmark + '_' + data_type
+        print(self.strmark + '_LOGGER>>> Start sending data to ' + table_name + ' ...')
+
+        print(self.strmark + '_LOGGER>>> Sending data to ' + table_name + ' Done.')
+
 
 # Utilities
 def convert_to_json(rbody):
