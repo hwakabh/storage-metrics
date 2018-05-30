@@ -39,33 +39,41 @@ def main():
     isilon_info = get_isilon_information(str_ipaddress, str_username, str_password)
 
     # Instantiate Collector Class with constructor
-    isilon_collector = Collector(strmark='ISILON')
+    isilon_collector = Collector(strmark='isilon')
 
     # Send message to rabbitmq
     isilon_collector.send_message('[tmp]Isilon_Start')
 
     # --- Run main task(capacity)
     # Create capacity table in postgres
-    capacity_columns = '(cluster_name varchar' + \
-                       ', timestamp timestamp' + \
-                       ', ifs_bytes_total bigint' + \
-                       ', ifs_bytes_used bigint' + \
-                       ', ifs_percent_used double precision' + \
-                       ', ifs_bytes_free bigint' + \
-                       ', ifs_percent_free double precision)'
-    isilon_collector.create_table(type='capacity', columns=capacity_columns)
+    capacity_maps = {'clustername': 'varchar',
+                     'timestamp': 'timestamp',
+                     '"ifs.bytes.total"': 'bigint',
+                     '"ifs.bytes.used"': 'bigint',
+                     '"ifs.percent.used"': 'double precision',
+                     '"ifs.bytes.free"': 'bigint',
+                     '"ifs.percent.free"': 'double precision'
+                     }
+    c_columns = '('
+    for k, v in capacity_maps.items():
+        c_columns += k + ' ' + v + ','
+    c_columns += ')'
+
+    isilon_collector.create_table(type='capacity', columns=c_columns.replace(',)',')'))
 
     # add cluster_name and timestamp before applying https results
-    c_results = {}
-    c_results['cluster_name'] = isilon_info['name']
-    c_results['timestamp'] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    # TODO: retrieve 'clustername' and 'timestamp' labels directly from capacity_maps
+    c_results = {'clustername': isilon_info['name'],
+                 'timestamp': datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
 
     # Get capacity information
-    capacity_keys = ('ifs.bytes.total', 'ifs.bytes.used', 'ifs.percent.used', 'ifs.bytes.free', 'ifs.percent.free', )
-    for k in capacity_keys:
-        uri = 'https://' + str_ipaddress + ':8080' + '/platform/1/statistics/current?key=' + k
-        ret = get_https_response_with_json(str_username, str_password, uri)
-        c_results[k] = ret['stats'][0]['value']
+    for i in capacity_maps:
+        if ('clustername' in i) or ('timestamp' in i):
+            pass
+        else:
+            uri = 'https://' + str_ipaddress + ':8080' + '/platform/1/statistics/current?key=' + i.replace('"','')
+            ret = get_https_response_with_json(str_username, str_password, uri)
+            c_results[i.replace('"','')] = ret['stats'][0]['value']
     print(c_results)
 
     # Insert capacity information to postgres
