@@ -1,7 +1,7 @@
 from common_functions import Collector
 from common_functions import get_https_response_with_json
 import params as param
-
+import datetime
 
 def get_isilon_information(ip, user, passwd):
     api = 'https://' + ip + ':8080' + '/platform/1/cluster/config'
@@ -37,7 +37,6 @@ def main():
     print('ISILON_LOGGER>>> Target Isilon : ' + str_ipaddress)
     print('ISILON_LOGGER>>> General Information : ')
     isilon_info = get_isilon_information(str_ipaddress, str_username, str_password)
-    # isilon_info['name']
 
     # Instantiate Collector Class with constructor
     isilon_collector = Collector(strmark='ISILON')
@@ -56,9 +55,13 @@ def main():
                        ', ifs_percent_free double precision)'
     isilon_collector.create_capacity_table(capacity_columns)
 
+    # add cluster_name and timestamp before applying https results
+    c_results = {}
+    c_results['cluster_name'] = isilon_info['name']
+    c_results['timestamp'] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
     # Get capacity information
     capacity_keys = ('ifs.bytes.total', 'ifs.bytes.used', 'ifs.percent.used', 'ifs.bytes.free', 'ifs.percent.free', )
-    c_results = {}
     for k in capacity_keys:
         uri = 'https://' + str_ipaddress + ':8080' + '/platform/1/statistics/current?key=' + k
         ret = get_https_response_with_json(str_username, str_password, uri)
@@ -66,7 +69,7 @@ def main():
     print(c_results)
 
     # Insert capacity information to postgres
-    # common.send_data_to_postgres()
+    isilon_collector.send_data_to_postgres(c_results)
 
     # --- Run main task(quota)
     # Create quota table in postgres
