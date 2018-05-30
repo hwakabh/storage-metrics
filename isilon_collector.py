@@ -2,10 +2,6 @@ from common_functions import Collector
 from common_functions import get_https_response_with_json
 import params as param
 
-global str_ipaddress
-global str_username
-global str_password
-
 
 def get_isilon_information(ip, user, passwd):
     api = 'https://' + ip + ':8080' + '/platform/1/cluster/config'
