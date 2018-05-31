@@ -89,10 +89,17 @@ class Collector:
         return return_value
 
     def send_data_to_postgres(self, data, data_type):
-        # data_type = capacity, quota, performance
         table_name = self.strmark + '_' + data_type
         print(self.strmark + '_LOGGER>>> Start sending data to ' + table_name + ' ...')
-
+        if data_type == 'capacity':
+            pass
+        elif data_type == 'quota':
+            pass
+        elif data_type == 'performance':
+            pass
+        else:
+            print(self.strmark + '_LOGGER>>> Data-Type specified seemed to be wrong, expecting[capacity, quota, performance]')
+        print(data)
         print(self.strmark + '_LOGGER>>> Sending data to ' + table_name + ' Done.')
 
 
