@@ -3,6 +3,7 @@ from common_functions import get_https_response_with_json
 import params as param
 import datetime
 
+
 def get_isilon_information(ip, user, passwd):
     api = 'https://' + ip + ':8080' + '/platform/1/cluster/config'
     try:
@@ -58,7 +59,6 @@ def main():
     for k, v in capacity_maps.items():
         c_columns += k + ' ' + v + ','
     c_columns += ')'
-
     isilon_collector.create_table(type='capacity', columns=c_columns.replace(',)',')'))
 
     # add cluster_name and timestamp before applying https results
@@ -81,8 +81,18 @@ def main():
 
     # --- Run main task(quota)
     # Create quota table in postgres
-    quota_columns = '(qid varchar, qusername varchar, qpassword varchar)'
-    isilon_collector.create_table(type='quota', columns=quota_columns)
+    quota_maps = {'clustername': 'varchar',
+                 'timestamp': 'timestamp',
+                 'path': 'varchar',
+                 'hard_threshold': 'bigint',
+                 'logical_with_overhead': 'bigint',
+                 'physical_with_overhead': 'bigint'
+                 }
+    q_columns = '('
+    for k, v in quota_maps.items():
+        q_columns += k + ' ' + v + ','
+    q_columns += ')'
+    isilon_collector.create_table(type='quota', columns=q_columns.replace(',)',')'))
 
     # Get quota information
     # common.get_https_response_with_json()
@@ -92,8 +102,18 @@ def main():
 
     # --- Run main task(performance)
     # Create performance table in postgres
-    perf_columns = '(pfid varchar, pfsername varchar, pfpassword varchar)'
-    isilon_collector.create_table(type='performance', columns=perf_columns)
+    performance_maps = {'clustername': 'varchar',
+                 'timestamp': 'timestamp',
+                 'ext1_rdavg_day': 'double precision', 'ext1_wtavg_day': 'double precision',
+                 'ext2_rdavg_day': 'double precision', 'ext2_wtavg_day': 'double precision',
+                 'gb1_rdavg_day': 'double precision', 'gb1_wtavg_day': 'double precision',
+                 'gb2_rdavg_day': 'double precision', 'gb2_wtavg_day': 'double precision'
+                 }
+    perf_columns = '('
+    for k, v in performance_maps.items():
+        perf_columns += k + ' ' + v + ','
+    perf_columns += ')'
+    isilon_collector.create_table(type='performance', columns=perf_columns.replace(',)',')'))
 
     # Get performance information
     # common.get_https_response_with_json()
