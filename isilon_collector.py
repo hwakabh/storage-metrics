@@ -59,14 +59,13 @@ def main():
     c_columns += ')'
     isilon_collector.create_table(type='capacity', columns=c_columns.replace(',)',')'))
 
-    # add cluster_name and timestamp before applying https results
-    c_results = {'clustername': isilon_info['name'],
-                 'timestamp': datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
-
     # Get capacity information
+    c_results = {}
     for i in capacity_maps:
-        if ('clustername' in i) or ('timestamp' in i):
-            pass
+        if 'clustername' in i:
+            c_results[i] = isilon_info['name']
+        elif 'timestamp' in i:
+            c_results[i] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         else:
             uri = 'https://' + str_ipaddress + ':8080' + '/platform/1/statistics/current?key=' + i.replace('"','')
             ret = get_https_response_with_json(str_username, str_password, uri)
