@@ -20,7 +20,6 @@ def get_isilon_information(ip, user, passwd):
         # Return result
         return ret
     except Exception:
-        # TODO: Specify Exception if wrong URL
         print('ISILON_LOGGER>>> Exception is throwed by common function. '
               'Error when getting information from Isilon ...')
 
@@ -34,7 +33,6 @@ def main():
     str_password = param.isilon_pass
 
     # Getting General isilon Information
-    # TODO: Considering Looping for the case of multiple isilon
     print('ISILON_LOGGER>>> Target Isilon : ' + str_ipaddress)
     print('ISILON_LOGGER>>> General Information : ')
     isilon_info = get_isilon_information(str_ipaddress, str_username, str_password)
@@ -42,8 +40,8 @@ def main():
     # Instantiate Collector Class with constructor
     isilon_collector = Collector(strmark='isilon')
 
-    # Send message to rabbitmq
-    isilon_collector.send_message('[tmp]Isilon_Start')
+    # # Send message to rabbitmq
+    # isilon_collector.send_message('[tmp]Isilon_Start')
 
     # --- Run main task(capacity)
     # Create capacity table in postgres
@@ -62,7 +60,6 @@ def main():
     isilon_collector.create_table(type='capacity', columns=c_columns.replace(',)',')'))
 
     # add cluster_name and timestamp before applying https results
-    # TODO: retrieve 'clustername' and 'timestamp' labels directly from capacity_maps
     c_results = {'clustername': isilon_info['name'],
                  'timestamp': datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
 
@@ -121,8 +118,8 @@ def main():
     # Insert performance information to postgres
     # common.send_data_to_postgres()
 
-    # Send message to rabbitmq
-    isilon_collector.send_message('[tmp]Isilon_END')
+    # # Send message to rabbitmq
+    # isilon_collector.send_message('[tmp]Isilon_END')
 
     print('ISILON_LOGGER>>> Isilon Collector has done its task...!!')
 

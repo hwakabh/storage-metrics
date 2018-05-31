@@ -113,7 +113,6 @@ def get_https_response_with_json(username, password, url):
         print('FOR DEBUG>>> Using HTTPS. GET from : ' + url)
     else:
         print('FOR DEBUG>>> URL seems to be wrong with : ' + url)
-        # TODO: Specify Exception if wrong URL
         raise Exception
 
     rbody = ''
