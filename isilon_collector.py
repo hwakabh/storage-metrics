@@ -71,7 +71,6 @@ def main():
             uri = 'https://' + str_ipaddress + ':8080' + '/platform/1/statistics/current?key=' + i.replace('"','')
             ret = get_https_response_with_json(str_username, str_password, uri)
             c_results[i.replace('"','')] = ret['stats'][0]['value']
-    print(c_results)
 
     # Insert capacity information to postgres
     isilon_collector.send_data_to_postgres(data=c_results, data_type='capacity')
@@ -92,10 +91,37 @@ def main():
     isilon_collector.create_table(type='quota', columns=q_columns.replace(',)',')'))
 
     # Get quota information
-    # common.get_https_response_with_json()
+    uri = 'https://' + str_ipaddress + ':8080' + '/platform/1/quota/quotas'
+    ret = get_https_response_with_json(str_username, str_password, uri)
 
-    # Insert quota information to postgres
-    # common.send_data_to_postgres()
+    q_results = {}
+    for i in quota_maps:
+        value_list = []
+        if 'clustername' in i:
+            q_results[i] = isilon_info['name']
+        elif 'timestamp' in i:
+            q_results[i] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        elif i == 'path':
+            for v in ret['quotas']:
+                value_list.append(v['path'])
+                q_results[i] = value_list
+        elif i == 'hard_threshold':
+            for v in ret['quotas']:
+                value_list.append(v['thresholds']['hard'])
+                q_results[i] = value_list
+        elif i == 'logical_with_overhead':
+            for v in ret['quotas']:
+                value_list.append(v['usage']['logical'])
+                q_results[i] = value_list
+        elif i == 'physical_with_overhead':
+            for v in ret['quotas']:
+                value_list.append(v['usage']['physical'])
+                q_results[i] = value_list
+        else:
+            print('Some Errors...')
+
+    # # Insert capacity information to postgres
+    # isilon_collector.send_data_to_postgres(data=q_results, data_type='quota')
 
     # --- Run main task(performance)
     # Create performance table in postgres
