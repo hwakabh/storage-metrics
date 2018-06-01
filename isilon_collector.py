@@ -46,12 +46,12 @@ def main():
     # --- Run main task(capacity)
     # Create capacity table in postgres
     capacity_maps = {'clustername': 'varchar',
-                     'timestamp': 'timestamp',
-                     '"ifs.bytes.total"': 'bigint',
-                     '"ifs.bytes.used"': 'bigint',
-                     '"ifs.percent.used"': 'double precision',
-                     '"ifs.bytes.free"': 'bigint',
-                     '"ifs.percent.free"': 'double precision'
+                     'timestamp': 'varchar',
+                     'ifs_bytes_total': 'bigint',
+                     'ifs_bytes_used': 'bigint',
+                     'ifs_percent_used': 'double precision',
+                     'ifs_bytes_free': 'bigint',
+                     'ifs_percent_free': 'double precision'
                      }
     c_columns = '('
     for k, v in capacity_maps.items():
@@ -65,11 +65,11 @@ def main():
         if 'clustername' in i:
             c_results[i] = isilon_info['name']
         elif 'timestamp' in i:
-            c_results[i] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            c_results[i] = datetime.datetime.now().strftime('%Y/%m/%d %H:%M:%S')
         else:
-            uri = 'https://' + str_ipaddress + ':8080' + '/platform/1/statistics/current?key=' + i.replace('"','')
+            uri = 'https://' + str_ipaddress + ':8080' + '/platform/1/statistics/current?key=' + i.replace('_','.')
             ret = get_https_response_with_json(str_username, str_password, uri)
-            c_results[i.replace('"','')] = ret['stats'][0]['value']
+            c_results[i] = ret['stats'][0]['value']
 
     # Insert capacity information to postgres
     isilon_collector.send_data_to_postgres(data=c_results, data_type='capacity')
@@ -77,12 +77,12 @@ def main():
     # --- Run main task(quota)
     # Create quota table in postgres
     quota_maps = {'clustername': 'varchar',
-                 'timestamp': 'timestamp',
-                 'path': 'varchar',
-                 'hard_threshold': 'bigint',
-                 'logical_with_overhead': 'bigint',
-                 'physical_with_overhead': 'bigint'
-                 }
+                  'timestamp': 'varchar',
+                  'path': 'varchar',
+                  'hard_threshold': 'bigint',
+                  'logical_with_overhead': 'bigint',
+                  'physical_with_overhead': 'bigint'
+                  }
     q_columns = '('
     for k, v in quota_maps.items():
         q_columns += k + ' ' + v + ','
@@ -99,14 +99,17 @@ def main():
         if 'clustername' in i:
             q_results[i] = isilon_info['name']
         elif 'timestamp' in i:
-            q_results[i] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            q_results[i] = datetime.datetime.now().strftime('%Y/%m/%d %H:%M:%S')
         elif i == 'path':
             for v in ret['quotas']:
                 value_list.append(v['path'])
                 q_results[i] = value_list
         elif i == 'hard_threshold':
             for v in ret['quotas']:
-                value_list.append(v['thresholds']['hard'])
+                if v['thresholds']['hard'] is None:
+                    value_list.append(0)
+                else:
+                    value_list.append(v['thresholds']['hard'])
                 q_results[i] = value_list
         elif i == 'logical_with_overhead':
             for v in ret['quotas']:
@@ -119,18 +122,18 @@ def main():
         else:
             print('Some Errors...')
 
-    # # Insert capacity information to postgres
-    # isilon_collector.send_data_to_postgres(data=q_results, data_type='quota')
+    # Insert capacity information to postgres
+    isilon_collector.send_data_to_postgres(data=q_results, data_type='quota')
 
     # --- Run main task(performance)
     # Create performance table in postgres
     performance_maps = {'clustername': 'varchar',
-                 'timestamp': 'timestamp',
-                 'ext1_rdavg_day': 'double precision', 'ext1_wtavg_day': 'double precision',
-                 'ext2_rdavg_day': 'double precision', 'ext2_wtavg_day': 'double precision',
-                 'gb1_rdavg_day': 'double precision', 'gb1_wtavg_day': 'double precision',
-                 'gb2_rdavg_day': 'double precision', 'gb2_wtavg_day': 'double precision'
-                 }
+                        'timestamp': 'varchar',
+                        'ext1_rdavg_day': 'double precision', 'ext1_wtavg_day': 'double precision',
+                        'ext2_rdavg_day': 'double precision', 'ext2_wtavg_day': 'double precision',
+                        'gb1_rdavg_day': 'double precision', 'gb1_wtavg_day': 'double precision',
+                        'gb2_rdavg_day': 'double precision', 'gb2_wtavg_day': 'double precision'
+                        }
     perf_columns = '('
     for k, v in performance_maps.items():
         perf_columns += k + ' ' + v + ','

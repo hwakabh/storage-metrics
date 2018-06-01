@@ -63,7 +63,7 @@ class Collector:
         table_name = self.strmark + '_' + type + '_table'
         print(self.strmark + '_LOGGER>>> Creating ' + type + ' table on Postgres ...')
         create_table(table_name, columns)
-        print(self.strmark + '_LOGGER>>> Creating ' + type + ' table on Postgres ...')
+        print(self.strmark + '_LOGGER>>> Creating ' + type + ' table Done.')
 
     # RabbitMQ : each collector is 'Producer' and would 'publish(=Send)' message
     def send_message(self, msg):
@@ -89,17 +89,43 @@ class Collector:
         return return_value
 
     def send_data_to_postgres(self, data, data_type):
-        table_name = self.strmark + '_' + data_type
+        table_name = self.strmark + '_' + data_type + '_table'
         print(self.strmark + '_LOGGER>>> Start sending data to ' + table_name + ' ...')
+        # Instantiate Postgres
+        pg = Postgres(hostname=param.pg_address, port=param.pg_ports[0],
+                      username=param.pg_username, password=param.pg_password, database=param.pg_database)
+        pg.connect()
+        cur = pg.get_connection().cursor()
+
         if data_type == 'capacity':
-            pass
+            # Generate query to table inserted
+            q = 'INSERT INTO ' + table_name + '('
+            for k in data.keys():
+                q += str(k) + ', '
+            q += ') VALUES('
+            for v in data.values():
+                q += '\'' + str(v) + '\', '
+            q += ')'
+            # Execute query
+            cur.execute(q.replace(', )', ')'))
         elif data_type == 'quota':
-            pass
-        elif data_type == 'performance':
-            pass
+            for l in range(len(data['path'])):
+                # Generate query to table inserted
+                q = 'INSERT INTO ' + table_name + '('
+                for k in data.keys():
+                    q += str(k) + ', '
+                q += ') VALUES('
+                for v in data.values():
+                    if type(v) is list:
+                        q += '\'' + str(v[l]) + '\', '
+                    else:
+                        q += '\'' + str(v) + '\', '
+                q += ')'
+                # Execute query
+                cur.execute(q.replace(', )', ')'))
         else:
             print(self.strmark + '_LOGGER>>> Data-Type specified seemed to be wrong, expecting[capacity, quota, performance]')
-        print(data)
+        pg.disconnect()
         print(self.strmark + '_LOGGER>>> Sending data to ' + table_name + ' Done.')
 
 
