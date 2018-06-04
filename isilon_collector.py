@@ -177,9 +177,12 @@ def main():
         elif 'timestamp' in i:
             cpu_results[i] = datetime.datetime.now().strftime('%Y/%m/%d %H:%M:%S')
         else:
+            unix_today = int(datetime.datetime.timestamp(datetime.datetime.now()))
+            unix_yesterday = int(unix_today - 86400)
+
             # add to cpu keys and get information about CPU
             uri_key_cpu = 'node.cpu.idle.avg&nodes=all'
-            uri = uri_prefix + '?key=' + uri_key_cpu
+            uri = uri_prefix + '?begin=' + str(unix_yesterday) + '&end=' + str(unix_today) + '&key=' + uri_key_cpu
             ret_cpu = get_https_response_with_json(str_username, str_password, uri)
             # Calculate daily CPu ucalculate_averagetilization
             daily_cpu_util = calculate_average('cpu', ret_cpu)
