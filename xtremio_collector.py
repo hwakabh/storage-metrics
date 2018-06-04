@@ -58,8 +58,13 @@ def calculate_xenv_cpu_utilization(json, sc_count):
     return sc_map
 
 
+# Calculation for Cluster IOPS/Latency/Data-eduction-ratio
 def calculate_cluster_performances(json):
-    print(json)
+    sum = 0
+    for cl in json['counters']:
+        sum += cl[4]
+    average_value = sum / len(json['counters'])
+    return average_value
 
 
 def main():
@@ -111,7 +116,8 @@ def main():
     xtremio_collector.send_data_to_postgres(data=c_results, data_type='capacity')
 
     # #! Volume(XtremIO LUNs information)
-    # uri = 'https://10.32.210.156/api/json/v2/types/volumes?cluster-name=XIO_S5&full=1&prop=name&prop=vol-size&prop=logical-space-in-use&prop=naa-name&prop=ancestor-vol-id&prop=lun-mapping-list'
+    # uri = 'https://10.32.210.156/api/json/v2/types/volumes?cluster-name=XIO_S5&full=1
+    # &prop=name&prop=vol-size&prop=logical-space-in-use&prop=naa-name&prop=ancestor-vol-id&prop=lun-mapping-list'
     # ret = get_https_response_with_json(str_username, str_password, uri)
     # print(ret)
 
@@ -157,6 +163,7 @@ def main():
     # Insert avg__cpu usage to postgres
     xtremio_collector.send_data_to_postgres(data=sc_perf_results, data_type='sc_performance')
 
+    # --- Run main task(performance: IOPS, Latency, Data-eduction-ratio)
     # Create Cluster Performance table in postgres
     cl_perf_maps = {'clustername': 'varchar',
                     'timestamp': 'varchar',
@@ -170,22 +177,23 @@ def main():
     cl_perf_columns += ')'
     xtremio_collector.create_table(type='cl_performance', columns=cl_perf_columns.replace(',)',')'))
 
-    # Get cluster performance(IOPS, Latency, Data-eduction-ratio)
-    uri = get_xtremio_performance_uri(ip=str_ipaddress, entity='Cluster', property='avg__iops')
-    ret = get_https_response_with_json(str_username, str_password, uri)
+    # Get performance information(IOPS, Latency, Data-eduction-ratio)
+    cl_perf_results = {}
+    for i in cl_perf_maps:
+        if 'clustername' in i:
+            cl_perf_results[i] = clustername
+        elif 'timestamp' in i:
+            cl_perf_results[i] = datetime.datetime.now().strftime('%Y/%m/%d %H:%M:%S')
+        else:
+            # Generate and GET response
+            uri = get_xtremio_performance_uri(ip=str_ipaddress, entity='Cluster', property=i)
+            ret = get_https_response_with_json(str_username, str_password, uri)
+            # calculate averages
+            avg_value = calculate_cluster_performances(ret)
+            cl_perf_results[i] = avg_value
 
-    uri = get_xtremio_performance_uri(ip=str_ipaddress, entity='Cluster', property='avg__avg_latency')
-    ret = get_https_response_with_json(str_username, str_password, uri)
-
-    uri = get_xtremio_performance_uri(ip=str_ipaddress, entity='Cluster', property='avg__data_reduction_ratio')
-    ret = get_https_response_with_json(str_username, str_password, uri)
-
-
-
-    # --- Run main task(performance: IOPS/Latency/Data-eduction-ratio)
-
-    # # Insert performance information to postgres
-    # xtremio_collector.send_data_to_postgres(data=c_results, data_type='performance')
+    # Insert capacity information to postgres
+    xtremio_collector.send_data_to_postgres(data=cl_perf_results, data_type='cl_performance')
 
     # # Send message to rabbitmq
     # xtremio_collector.send_message('[tmp]XtremIO_END')

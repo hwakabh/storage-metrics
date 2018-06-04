@@ -77,7 +77,7 @@ class Collector:
         pg.connect()
         cur = pg.get_connection().cursor()
 
-        if (data_type == 'capacity') or (data_type == 'cpu') or (data_type == 'bandwidth'):
+        if (data_type == 'capacity') or (data_type == 'cpu') or (data_type == 'bandwidth') or (data_type == 'cl_performance'):
                 # Generate query to table inserted
             q = 'INSERT INTO ' + table_name + '('
             for k in data.keys():
@@ -121,7 +121,7 @@ class Collector:
         else:
             print(self.strmark.upper() + '_LOGGER>>> Data-Type specified seemed to be wrong, data-type expecting follows bellow: \n'
                                          '\t Isilon : [capacity, quota, cpu, bandwidth] \n'
-                                         '\t XtremIO : [capacity, sc_performance, cl_perfomance] \n'
+                                         '\t XtremIO : [capacity, sc_performance, cl_performance] \n'
                   )
         pg.disconnect()
         print(self.strmark.upper() + '_LOGGER>>> Sending data to ' + table_name + ' Done.')
