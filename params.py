@@ -39,10 +39,10 @@ index = {
 # -- For XtremIO
 xtremio_address = '10.32.210.156'
 xtremio_user = 'admin'
-xtermio_pass = 'Xtrem10'
+xtremio_pass = 'Xtrem10'
 xtremio_imgname = 'smetric/xtremiocollector'
-xtermio_clogpath = '/var/log/collector/xtremio'
-xtermio_hlogpath = '/home/smetric/log/xtremio'
+xtremio_clogpath = '/var/log/collector/xtremio'
+xtremio_hlogpath = '/home/smetric/log/xtremio'
 
 # -- For Isilon
 isilon_address = '10.32.239.181'
