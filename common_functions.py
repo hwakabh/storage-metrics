@@ -34,32 +34,12 @@ class Postgres:
         self.connection.close()
 
 
-def create_table(name, columns):
-    # Instantiate Postgres
-    pg = Postgres(hostname=param.pg_address, port=param.pg_ports[0],
-                  username=param.pg_username, password=param.pg_password, database=param.pg_database)
-    # Generate query
-    q = 'CREATE TABLE IF NOT EXISTS ' + name + columns
-    # Connect to postgres and run create query
-    pg.connect()
-    cur = pg.get_connection().cursor()
-    cur.execute(q)
-    pg.disconnect()
-
-
-def run_sql_query():
-    pass
-
-
-def send_data_to_postgres():
-    pass
-
-
 class Collector:
     def __init__(self, strmark):
         self.strmark = strmark
 
     def create_table(self, type, columns):
+        # Expected types: capacity, quota, cpu bandwidth
         table_name = self.strmark + '_' + type + '_table'
         print(self.strmark + '_LOGGER>>> Creating ' + type + ' table on Postgres ...')
         create_table(table_name, columns)
@@ -97,8 +77,8 @@ class Collector:
         pg.connect()
         cur = pg.get_connection().cursor()
 
-        if data_type == 'capacity':
-            # Generate query to table inserted
+        if (data_type == 'capacity') or (data_type == 'cpu') or (data_type == 'bandwidth'):
+                # Generate query to table inserted
             q = 'INSERT INTO ' + table_name + '('
             for k in data.keys():
                 q += str(k) + ', '
@@ -124,9 +104,26 @@ class Collector:
                 # Execute query
                 cur.execute(q.replace(', )', ')'))
         else:
-            print(self.strmark + '_LOGGER>>> Data-Type specified seemed to be wrong, expecting[capacity, quota, performance]')
+            print(self.strmark + '_LOGGER>>> Data-Type specified seemed to be wrong, expecting[capacity, quota, cpu, bandwidth]')
         pg.disconnect()
         print(self.strmark + '_LOGGER>>> Sending data to ' + table_name + ' Done.')
+
+
+def create_table(name, columns):
+    # Instantiate Postgres
+    pg = Postgres(hostname=param.pg_address, port=param.pg_ports[0],
+                  username=param.pg_username, password=param.pg_password, database=param.pg_database)
+    # Generate query
+    q = 'CREATE TABLE IF NOT EXISTS ' + name + columns
+    # Connect to postgres and run create query
+    pg.connect()
+    cur = pg.get_connection().cursor()
+    cur.execute(q)
+    pg.disconnect()
+
+
+def run_sql_query():
+    pass
 
 
 # Utilities
@@ -153,7 +150,7 @@ def get_https_response_with_json(username, password, url):
     try:
         # verify=False for ignore SSL Certificate
         r = requests.get(url, auth=(username, password), verify=False)
-        print('FOR_DEBUG>>> Return code 200, seems that Successfully GET content.')
+        print('FOR_DEBUG>>> Return code fine, seems that Successfully GET content.')
         rbody = r.text
     except Exception as e:
         print('FOR_DEBUG>>> Some Error occurred when getting HTTP/HTTPS response.')
