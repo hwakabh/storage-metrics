@@ -81,6 +81,18 @@ def main():
     # ret = get_https_response_with_json(str_username, str_password, uri)
     # print(ret)
 
+    # --- Run main task(performance: CPU)
+
+    # --- Run main task(performance: IOPS/Latency/Data-eduction-ratio)
+
+    # # Insert performance information to postgres
+    # xtremio_collector.send_data_to_postgres(data=c_results, data_type='performance')
+
+    # # Send message to rabbitmq
+    # xtremio_collector.send_message('[tmp]XtremIO_END')
+
+    print('XTREMIO_LOGGER>>> XtremIO Collector has done its task...!!')
+
 
 if __name__ == '__main__':
     main()
