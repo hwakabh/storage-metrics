@@ -95,6 +95,33 @@ class Dockerengine:
             self.client.stop(container=container_id)
 
 
+class ElasticSearch():
+    def __init__(self):
+        pass
+
+    def check_es_existence(self):
+        pass
+
+    def get_data_from_postgres(self):
+        pass
+
+    # Create queries and json objects to posting ElasticSearch
+    def json_builder(self):
+        pass
+
+    # HTTP post according to flag specified
+    def send_data_to_es(self):
+        pass
+
+
+# Integration method for execute all
+def send_all_data(storage):
+    # storage = 'xtremio', 'isilon'
+    pass
+
+
+
+
 def start_message_monitor():
     rabbit = Consumer()
 
@@ -132,8 +159,12 @@ def main():
     initialize_collector_status()
 
     # --- start xtremio_collector(data collected would be inserted to postgres by each collector)
+    print('LOGGER>>> Launching XtremIO-Collector container...')
+    # d.launch_container(strmark='xtremio')
 
     # --- start isilon_collector(data collected would be inserted to postgres by each collector)
+    print('LOGGER>>> Launching Isilon-Collector container...')
+    # d.launch_container(strmark='isilon')
 
     # --- wait for collectors complete
 
