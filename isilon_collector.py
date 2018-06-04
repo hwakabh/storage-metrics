@@ -24,6 +24,35 @@ def get_isilon_information(ip, user, passwd):
               'Error when getting information from Isilon ...')
 
 
+def calculate_average(t, json):
+    avg_sum = 0
+    if t == 'cpu':
+        for i in range(len(json['stats'])):
+            sum = 0
+            for v in json['stats'][i]['values']:
+                e = v['value'] / 10
+                sum = sum + e
+            cpu_average_byid = 100 - (sum / len(json['stats'][i]['values']))
+            print('ISILON_LOGGER>>> CPU Average Util on DeviceID-' + str(json['stats'][i]['devid']) + ' : ' + str(cpu_average_byid))
+            avg_sum = avg_sum + cpu_average_byid
+        cpu_average = avg_sum / len(json['stats'])
+        print('ISILON_LOGGER>>> Average CPU Utilization : ' + str(cpu_average))
+        return cpu_average
+    elif t == 'bandwidth':
+        for i in range(len(json['stats'])):
+            sum = 0
+            for v in json['stats'][i]['values']:
+                sum = sum + v['value']
+            bandwidth_average_byid = sum / len(json['stats'][i]['values'])
+            print('ISILON_LOGGER>>> Average bandwidth Util on DeviceID-' + str(json['stats'][i]['devid']) + ' : ' + str(bandwidth_average_byid))
+            avg_sum = avg_sum + bandwidth_average_byid
+        bandwidth_average = avg_sum / len(json['stats'])
+        print('ISILON_LOGGER>>> Bandwidth average Utilization : ' + str(bandwidth_average))
+        return bandwidth_average
+    else:
+        print('Specified flag is wrong...')
+
+
 def main():
     print('ISILON_LOGGER>>> Isilon Collector boots up...!!')
 
@@ -125,26 +154,80 @@ def main():
     # Insert capacity information to postgres
     isilon_collector.send_data_to_postgres(data=q_results, data_type='quota')
 
-    # --- Run main task(performance)
-    # Create performance table in postgres
-    performance_maps = {'clustername': 'varchar',
-                        'timestamp': 'varchar',
-                        'ext1_rdavg_day': 'double precision', 'ext1_wtavg_day': 'double precision',
-                        'ext2_rdavg_day': 'double precision', 'ext2_wtavg_day': 'double precision',
-                        'gb1_rdavg_day': 'double precision', 'gb1_wtavg_day': 'double precision',
-                        'gb2_rdavg_day': 'double precision', 'gb2_wtavg_day': 'double precision'
-                        }
-    perf_columns = '('
-    for k, v in performance_maps.items():
-        perf_columns += k + ' ' + v + ','
-    perf_columns += ')'
-    isilon_collector.create_table(type='performance', columns=perf_columns.replace(',)',')'))
+    # --- Run main task(performance: CPU/Bandwidth)
+    # Get common prefix(CPU/bandwidth)
+    uri_prefix = 'https://' + str_ipaddress + ':8080' + '/platform/1/statistics/history'
 
-    # Get performance information
-    # common.get_https_response_with_json()
+    # Create performance(CPU) table in postgres
+    cpu_maps = {'clustername': 'varchar',
+                'timestamp': 'varchar',
+                'average_cpu': 'double precision'
+                }
+    cpu_columns = '('
+    for k, v in cpu_maps.items():
+        cpu_columns += k + ' ' + v + ','
+    cpu_columns += ')'
+    isilon_collector.create_table(type='cpu', columns=cpu_columns.replace(',)', ')'))
 
-    # Insert performance information to postgres
-    # common.send_data_to_postgres()
+    # Get CPU information
+    cpu_results = {}
+    for i in cpu_maps:
+        if 'clustername' in i:
+            cpu_results[i] = isilon_info['name']
+        elif 'timestamp' in i:
+            cpu_results[i] = datetime.datetime.now().strftime('%Y/%m/%d %H:%M:%S')
+        else:
+            # add to cpu keys and get information about CPU
+            uri_key_cpu = 'node.cpu.idle.avg&nodes=all'
+            uri = uri_prefix + '?key=' + uri_key_cpu
+            ret_cpu = get_https_response_with_json(str_username, str_password, uri)
+            # Calculate daily CPu utilization
+            daily_cpu_util = calculate_average('cpu', ret_cpu)
+            cpu_results[i] = daily_cpu_util
+
+    # Insert CPU information to postgres
+    isilon_collector.send_data_to_postgres(data=cpu_results, data_type='cpu')
+
+    # Create performance(bandwidth) table in postgres
+    bandwidth_maps = {'clustername': 'varchar',
+                      'timestamp': 'varchar',
+                      'ext1_rdavg_day': 'double precision', 'ext1_wtavg_day': 'double precision',
+                      'ext2_rdavg_day': 'double precision', 'ext2_wtavg_day': 'double precision',
+                      'gb1_rdavg_day': 'double precision', 'gb1_wtavg_day': 'double precision',
+                      'gb2_rdavg_day': 'double precision', 'gb2_wtavg_day': 'double precision'
+                      }
+    bandwidth_columns = '('
+    for k, v in bandwidth_maps.items():
+        bandwidth_columns += k + ' ' + v + ','
+    bandwidth_columns += ')'
+    isilon_collector.create_table(type='bandwidth', columns=bandwidth_columns.replace(',)',')'))
+
+    # add to bandwidth keys and get information about bandwidth
+    uri_keys_bandwidth = (
+        'node.net.iface.bytes.out.rate.2',
+        'node.net.iface.bytes.in.rate.2',
+        'node.net.iface.bytes.out.rate.3',
+        'node.net.iface.bytes.in.rate.3',
+        'node.net.iface.bytes.out.rate.4',
+        'node.net.iface.bytes.in.rate.4',
+        'node.net.iface.bytes.out.rate.5',
+        'node.net.iface.bytes.in.rate.5'
+    )
+
+    # Get capacity information
+    bandwidth_results = {}
+    for i, v in enumerate(bandwidth_maps):
+        if 'clustername' in v:
+            bandwidth_results[v] = isilon_info['name']
+        elif 'timestamp' in v:
+            bandwidth_results[v] = datetime.datetime.now().strftime('%Y/%m/%d %H:%M:%S')
+        else:
+            uri = uri_prefix + '?key=' + uri_keys_bandwidth[i-2]
+            ret_bandwidth = get_https_response_with_json(str_username, str_password, uri)
+            bandwidth_results[v] = calculate_average('bandwidth', ret_bandwidth)
+
+    # Insert capacity information to postgres
+    isilon_collector.send_data_to_postgres(data=bandwidth_results, data_type='bandwidth')
 
     # # Send message to rabbitmq
     # isilon_collector.send_message('[tmp]Isilon_END')

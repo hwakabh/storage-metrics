@@ -105,7 +105,6 @@ def initialize_collector_status():
     print(ts.isilonc_status)
 
 
-
 def main():
     # --- starting controller
     print('LOGGER>>> Controller started by \'python controller.py\'')
