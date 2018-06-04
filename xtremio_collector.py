@@ -29,6 +29,24 @@ def get_xtremio_information(ip, user, passwd):
         return ret
 
 
+def get_xtremio_performance_uri(ip, entity, property):
+    now = datetime.datetime.now()
+    yesterday = now - datetime.timedelta(days=1)
+
+    uri = 'https://' + ip + '/api/json/v2/types/performance?' + \
+          'entity=' + entity + '&prop=' + property + '&granularity=one_hour' + \
+          '&from-time=' + str(yesterday.strftime('%Y-%m-%d+%H:%M:%S')) + '&to-time=' + str(now.strftime('%Y-%m-%d+%H:%M:%S'))
+    return uri
+
+
+def calculate_xenv_cpu_utilization(json):
+    print(json)
+
+
+def calculate_cluster_performances(json):
+    print(json)
+
+
 def main():
     print('XTREMIO_LOGGER>>> Isilon Collector boots up...!!')
 
@@ -63,11 +81,12 @@ def main():
     c_columns += ')'
     xtremio_collector.create_table(type='capacity', columns=c_columns.replace(',)',')'))
 
+    clustername = xtremio_info['content']['name']
     # Get capacity information
     c_results = {}
     for i in capacity_maps:
         if 'clustername' in i:
-            c_results[i] = xtremio_info['content']['name']
+            c_results[i] = clustername
         elif 'timestamp' in i:
             c_results[i] = datetime.datetime.now().strftime('%Y/%m/%d %H:%M:%S')
         else:
@@ -94,18 +113,36 @@ def main():
     sc_perf_columns += ')'
     xtremio_collector.create_table(type='sc_performance', columns=sc_perf_columns.replace(',)',')'))
 
+    # Set common prefix
+    # Get avg__cpu_usage
+    uri = get_xtremio_performance_uri(ip=str_ipaddress, entity='XEnv', property='avg__cpu_usage')
+    ret = get_https_response_with_json(str_username, str_password, uri)
+    # Calculate average CPU usage
+    average_cpu = calculate_xenv_cpu_utilization(ret)
+
+
     # Create Cluster Performance table in postgres
     cl_perf_maps = {'clustername': 'varchar',
-                   'timestamp': 'varchar',
-                   'avg__iops': 'double precision',
-                   'avg__avg_latency': 'double precision',
-                   'avg__data_reduction_ratio': 'double precision'
-                   }
+                    'timestamp': 'varchar',
+                    'avg__iops': 'double precision',
+                    'avg__avg_latency': 'double precision',
+                    'avg__data_reduction_ratio': 'double precision'
+                    }
     cl_perf_columns = '('
     for k, v in cl_perf_maps.items():
         cl_perf_columns += k + ' ' + v + ','
     cl_perf_columns += ')'
     xtremio_collector.create_table(type='cl_performance', columns=cl_perf_columns.replace(',)',')'))
+
+    # Get cluster performance(IOPS, Latency, Data-eduction-ratio)
+    uri = get_xtremio_performance_uri(ip=str_ipaddress, entity='Cluster', property='avg__iops')
+    ret = get_https_response_with_json(str_username, str_password, uri)
+
+    uri = get_xtremio_performance_uri(ip=str_ipaddress, entity='Cluster', property='avg__avg_latency')
+    ret = get_https_response_with_json(str_username, str_password, uri)
+
+    uri = get_xtremio_performance_uri(ip=str_ipaddress, entity='Cluster', property='avg__data_reduction_ratio')
+    ret = get_https_response_with_json(str_username, str_password, uri)
 
 
 
