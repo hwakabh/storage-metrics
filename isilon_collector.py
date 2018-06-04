@@ -149,7 +149,7 @@ def main():
                 value_list.append(v['usage']['physical'])
                 q_results[i] = value_list
         else:
-            print('Some Errors...')
+            print('ISILON_LOGGER>>> Some Errors...')
 
     # Insert capacity information to postgres
     isilon_collector.send_data_to_postgres(data=q_results, data_type='quota')
@@ -181,7 +181,7 @@ def main():
             uri_key_cpu = 'node.cpu.idle.avg&nodes=all'
             uri = uri_prefix + '?key=' + uri_key_cpu
             ret_cpu = get_https_response_with_json(str_username, str_password, uri)
-            # Calculate daily CPu utilization
+            # Calculate daily CPu ucalculate_averagetilization
             daily_cpu_util = calculate_average('cpu', ret_cpu)
             cpu_results[i] = daily_cpu_util
 
@@ -204,14 +204,10 @@ def main():
 
     # add to bandwidth keys and get information about bandwidth
     uri_keys_bandwidth = (
-        'node.net.iface.bytes.out.rate.2',
-        'node.net.iface.bytes.in.rate.2',
-        'node.net.iface.bytes.out.rate.3',
-        'node.net.iface.bytes.in.rate.3',
-        'node.net.iface.bytes.out.rate.4',
-        'node.net.iface.bytes.in.rate.4',
-        'node.net.iface.bytes.out.rate.5',
-        'node.net.iface.bytes.in.rate.5'
+        'node.net.iface.bytes.out.rate.2', 'node.net.iface.bytes.in.rate.2',
+        'node.net.iface.bytes.out.rate.3', 'node.net.iface.bytes.in.rate.3',
+        'node.net.iface.bytes.out.rate.4', 'node.net.iface.bytes.in.rate.4',
+        'node.net.iface.bytes.out.rate.5', 'node.net.iface.bytes.in.rate.5'
     )
 
     # Get capacity information
@@ -222,7 +218,10 @@ def main():
         elif 'timestamp' in v:
             bandwidth_results[v] = datetime.datetime.now().strftime('%Y/%m/%d %H:%M:%S')
         else:
-            uri = uri_prefix + '?key=' + uri_keys_bandwidth[i-2]
+            unix_today = int(datetime.datetime.timestamp(datetime.datetime.now()))
+            unix_yesterday = int(unix_today - 86400)
+            # Escape 'clustername' and 'timestamp' with [i-2]
+            uri = uri_prefix + '?begin=' + str(unix_yesterday) + '&end=' + str(unix_today) + '&key=' + uri_keys_bandwidth[i-2]
             ret_bandwidth = get_https_response_with_json(str_username, str_password, uri)
             bandwidth_results[v] = calculate_average('bandwidth', ret_bandwidth)
 
