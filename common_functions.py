@@ -41,9 +41,9 @@ class Collector:
     def create_table(self, type, columns):
         # Expected types: capacity, quota, cpu bandwidth
         table_name = self.strmark + '_' + type + '_table'
-        print(self.strmark + '_LOGGER>>> Creating ' + type + ' table on Postgres ...')
+        print(self.strmark.upper() + '_LOGGER>>> Creating ' + type + ' table on Postgres ...')
         create_table(table_name, columns)
-        print(self.strmark + '_LOGGER>>> Creating ' + type + ' table Done.')
+        print(self.strmark.upper() + '_LOGGER>>> Creating ' + type + ' table Done.')
 
     # RabbitMQ : each collector is 'Producer' and would 'publish(=Send)' message
     def send_message(self, msg):
@@ -53,24 +53,24 @@ class Collector:
             channel = connection.channel()
             # create channel to send message
             channel.queue_declare(queue=param.mq_quename)
-            print(self.strmark + '_LOGGER>>> Create channel ' + param.mq_quename + ' with RabbitMQ...')
+            print(self.strmark.upper() + '_LOGGER>>> Create channel ' + param.mq_quename + ' with RabbitMQ...')
             channel.basic_publish(exchange='', routing_key=param.mq_quename, body=msg)
-            print(self.strmark + '_LOGGER>>> [x]Messaage \'' + msg + '\' successfully sent to ' + param.mq_quename)
+            print(self.strmark.upper() + '_LOGGER>>> [x]Messaage \'' + msg + '\' successfully sent to ' + param.mq_quename)
             return_value = True
         except Exception as e:
-            print(self.strmark + '_LOGGER>>> Error when sending message ...')
+            print(self.strmark.upper() + '_LOGGER>>> Error when sending message ...')
             print('Errors : ', e.args)
         finally:
             try:
                 connection.close()
             except Exception as e:
-                print(self.strmark + '_LOGGER>>> Error when sending message ...')
+                print(self.strmark.upper() + '_LOGGER>>> Error when sending message ...')
                 print('Errors : ', e.args)
         return return_value
 
     def send_data_to_postgres(self, data, data_type):
         table_name = self.strmark + '_' + data_type + '_table'
-        print(self.strmark + '_LOGGER>>> Start sending data to ' + table_name + ' ...')
+        print(self.strmark.upper() + '_LOGGER>>> Start sending data to ' + table_name + ' ...')
         # Instantiate Postgres
         pg = Postgres(hostname=param.pg_address, port=param.pg_ports[0],
                       username=param.pg_username, password=param.pg_password, database=param.pg_database)
@@ -104,9 +104,9 @@ class Collector:
                 # Execute query
                 cur.execute(q.replace(', )', ')'))
         else:
-            print(self.strmark + '_LOGGER>>> Data-Type specified seemed to be wrong, expecting[capacity, quota, cpu, bandwidth]')
+            print(self.strmark.upper() + '_LOGGER>>> Data-Type specified seemed to be wrong, expecting[capacity, quota, cpu, bandwidth]')
         pg.disconnect()
-        print(self.strmark + '_LOGGER>>> Sending data to ' + table_name + ' Done.')
+        print(self.strmark.upper() + '_LOGGER>>> Sending data to ' + table_name + ' Done.')
 
 
 def create_table(name, columns):
