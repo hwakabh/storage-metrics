@@ -82,6 +82,32 @@ def main():
     # print(ret)
 
     # --- Run main task(performance: CPU)
+    # Create StorageController Performance table in postgres
+    sc_perf_maps = {'clustername': 'varchar',
+                    'timestamp': 'varchar',
+                    'cpu': 'varchar',
+                    'avg__cpu_usage': 'double precision'
+                   }
+    sc_perf_columns = '('
+    for k, v in sc_perf_maps.items():
+        sc_perf_columns += k + ' ' + v + ','
+    sc_perf_columns += ')'
+    xtremio_collector.create_table(type='sc_performance', columns=sc_perf_columns.replace(',)',')'))
+
+    # Create Cluster Performance table in postgres
+    cl_perf_maps = {'clustername': 'varchar',
+                   'timestamp': 'varchar',
+                   'avg__iops': 'double precision',
+                   'avg__avg_latency': 'double precision',
+                   'avg__data_reduction_ratio': 'double precision'
+                   }
+    cl_perf_columns = '('
+    for k, v in cl_perf_maps.items():
+        cl_perf_columns += k + ' ' + v + ','
+    cl_perf_columns += ')'
+    xtremio_collector.create_table(type='cl_performance', columns=cl_perf_columns.replace(',)',')'))
+
+
 
     # --- Run main task(performance: IOPS/Latency/Data-eduction-ratio)
 
