@@ -103,8 +103,26 @@ class Collector:
                 q += ')'
                 # Execute query
                 cur.execute(q.replace(', )', ')'))
+        elif data_type == 'sc_performance':
+            for l in range(len(data['cpu'])):
+                # Generate query to table inserted
+                q = 'INSERT INTO ' + table_name + '('
+                for k in data.keys():
+                    q += str(k) + ', '
+                q += ') VALUES('
+                for v in data.values():
+                    if type(v) is list:
+                        q += '\'' + str(v[l]) + '\', '
+                    else:
+                        q += '\'' + str(v) + '\', '
+                q += ')'
+                # Execute query
+                cur.execute(q.replace(', )', ')'))
         else:
-            print(self.strmark.upper() + '_LOGGER>>> Data-Type specified seemed to be wrong, expecting[capacity, quota, cpu, bandwidth]')
+            print(self.strmark.upper() + '_LOGGER>>> Data-Type specified seemed to be wrong, data-type expecting follows bellow: \n'
+                                         '\t Isilon : [capacity, quota, cpu, bandwidth] \n'
+                                         '\t XtremIO : [capacity, sc_performance, cl_perfomance] \n'
+                  )
         pg.disconnect()
         print(self.strmark.upper() + '_LOGGER>>> Sending data to ' + table_name + ' Done.')
 

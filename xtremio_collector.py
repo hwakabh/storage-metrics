@@ -22,6 +22,7 @@ def get_xtremio_information(ip, user, passwd):
         # Printing for debug
         print('S/N : ' + ret['content']['sys-psnt-serial-number'])
         print('XtremApp Software Version : ' + ret['content']['sys-sw-version'])
+        print('StorageController Count(xenv count) : ' + str(ret['content']['num-of-xenvs']))
         print('Brick information : ')
         for b in ret['content']['brick-list']:
             print('Brick Name : ' + b[1] + ' <<BrickNo : ' + str(b[0]) + ', BrickId : ' + str(b[2]) + '>>')
@@ -39,8 +40,22 @@ def get_xtremio_performance_uri(ip, entity, property):
     return uri
 
 
-def calculate_xenv_cpu_utilization(json):
-    print(json)
+def calculate_xenv_cpu_utilization(json, sc_count):
+    sc_map = {}
+    # Get all xenv name-list
+    scs = []
+    for sc in json['counters']:
+        scs.append(sc[2])
+    # Deduplicate with xenv name
+    uniq_sc = sorted(list(dict.fromkeys(scs)))
+
+    for c in range(int(sc_count)):
+        utils = [util[4] for util in json['counters'] if util[3] == (c+1)]
+        average_xenv_cpu_util = sum(utils) / len(utils)
+        print('Average xenv_cpu_util of ' + uniq_sc[c] + ' = ' + str(average_xenv_cpu_util) )
+        sc_map[str(uniq_sc[c])] = average_xenv_cpu_util
+
+    return sc_map
 
 
 def calculate_cluster_performances(json):
@@ -113,13 +128,34 @@ def main():
     sc_perf_columns += ')'
     xtremio_collector.create_table(type='sc_performance', columns=sc_perf_columns.replace(',)',')'))
 
-    # Set common prefix
-    # Get avg__cpu_usage
+    # Get avg__cpu_usage by StorageController
     uri = get_xtremio_performance_uri(ip=str_ipaddress, entity='XEnv', property='avg__cpu_usage')
     ret = get_https_response_with_json(str_username, str_password, uri)
-    # Calculate average CPU usage
-    average_cpu = calculate_xenv_cpu_utilization(ret)
 
+    # Calculate avg__cpu_usage by StorageController
+    average_xenv_cpu_utils = calculate_xenv_cpu_utilization(ret, xtremio_info['content']['num-of-xenvs'])
+
+    # Get xenv average cpu utilization information
+    sc_perf_results = {}
+    for i in sc_perf_maps:
+        value_list = []
+        if 'clustername' in i:
+            sc_perf_results[i] = clustername
+        elif 'timestamp' in i:
+            sc_perf_results[i] = datetime.datetime.now().strftime('%Y/%m/%d %H:%M:%S')
+        elif i == 'cpu':
+            for k in average_xenv_cpu_utils.keys():
+                value_list.append(k)
+                sc_perf_results[i] = value_list
+        elif i == 'avg__cpu_usage':
+            for v in average_xenv_cpu_utils.values():
+                value_list.append(v)
+                sc_perf_results[i] = value_list
+        else:
+            print('XTREMIO_LOGGER>>> Some Errors...')
+
+    # Insert avg__cpu usage to postgres
+    xtremio_collector.send_data_to_postgres(data=sc_perf_results, data_type='sc_performance')
 
     # Create Cluster Performance table in postgres
     cl_perf_maps = {'clustername': 'varchar',
