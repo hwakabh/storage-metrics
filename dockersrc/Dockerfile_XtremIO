@@ -1,9 +1,9 @@
 FROM python:latest
 
-RUN mkdir -p /emc
+RUN mkdir -p /smetrics
 RUN mkdir -p /var/log/collector/xtremio
 
-WORKDIR /emc
+WORKDIR /smetrics
 
 COPY . params.py
 COPY . common_functions.py
