@@ -1,15 +1,12 @@
 FROM python:latest
 
-RUN mkdir -p /emc/log
+RUN mkdir -p /emc
+RUN mkdir -p /var/log/controller
 
 WORKDIR /emc
 
-COPY Controller.jar Controller.jar
-COPY config.json config.json
-COPY log4j.properties log4j.properties
-COPY joined_cloudstack_vnx.ct joined_cloudstack_vnx.ct
-COPY joined_cloudstack_xtremio.ct joined_cloudstack_xtremio.ct
+COPY . params.py
+COPY . common_functions.py
+COPY . controller.py
 
-CMD java -jar Controller.jar
-#CMD ["/usr/bin/python xtremio_collector.py"]
-#CMD ["/usr/bin/python isilon_collector.py"]
+CMD ["/usr/local/bin/python controller.py"]

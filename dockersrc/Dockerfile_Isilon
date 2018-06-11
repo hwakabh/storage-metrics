@@ -5,8 +5,8 @@ RUN mkdir -p /var/log/collector/xtremio
 
 WORKDIR /emc
 
-COPY params.py params.py
-COPY common_functions.py common_functions.py
-COPY isilon_collector.py isilon_collector.py
+COPY . params.py
+COPY . common_functions.py
+COPY . isilon_collector.py
 
-CMD ["/usr/bin/python isilon_collector.py"]
+CMD ["/usr/local/bin/python isilon_collector.py"]
