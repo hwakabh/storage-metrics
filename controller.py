@@ -42,7 +42,7 @@ class Dockerengine:
             print('FOR_DEBUG>>> Image for ' + strmark + ' exist. Launching ' + strmark + ' containers...')
             return True
         else:
-            print('FOR_DEBUG>>> There is no image for ' + strmark + ' . ' + strmark + ' container failed to launch...')
+            print('FOR_DEBUG>>> There is no image for ' + strmark + '. ' + strmark + ' container failed to launch...')
             return False
 
     def launch_container(self, strmark):
@@ -67,6 +67,8 @@ class Dockerengine:
             image_name = param.xtremio_imgname
         elif strmark == 'isilon':
             image_name = param.isilon_imgname
+        else:
+            image_name = strmark
 
         # Checking for avoiding name conflict
         running_containers = self.get_containers(isall=False)
@@ -128,6 +130,15 @@ def check_es_existence():
     return (param.es_cname in running_containers)
 
 
+def build_image():
+    print('DEBUG>>> Building up docker images...')
+    f = open('./dockersrc/Dockerfile_Isilon', 'rb')
+    d2 = Dockerengine()
+    response = [line for line in d2.client.build(fileobj=f, tag='smetrics/isiloncollector', path='/root/emc/')]
+    for r in response:
+        print(r)
+
+
 # Integration method for execute all
 def send_all_data(storage):
     # storage = 'xtremio', 'isilon'
@@ -179,19 +190,20 @@ def main():
     initialize_collector_status()
 
     # --- start xtremio_collector(data collected would be inserted to postgres by each collector)
-    print('LOGGER>>> Launching XtremIO-Collector container...')
     if d.check_launch_image(strmark=param.xtremio_imgname):
-        d.launch_container(strmark=param.xtremio_imgname)
+        print('LOGGER>>> Launching XtremIO-Collector container...')
+        # d.launch_container(strmark='xtremio')
     else:
-        # Case if there's no image for smetric/xtremiocollector, start to build image
-        pass
+        # Case if there's no image for smetric/xtremiocollector, start to build image and launch container
+        print('DEBUG>>> Docker image build end...')
+        build_image()
 
     # --- start isilon_collector(data collected would be inserted to postgres by each collector)
-    print('LOGGER>>> Launching Isilon-Collector container...')
     if d.check_launch_image(strmark=param.isilon_imgname):
-        d.launch_container(strmark=param.isilon_imgname)
+        print('LOGGER>>> Launching Isilon-Collector container...')
+        # d.launch_container(strmark='isilon')
     else:
-        # Case if there's no image for smetric/isiloncollector, start to build image
+        # Case if there's no image for smetric/isiloncollector, start to build image and launch container
         pass
 
     # --- wait for collectors complete
