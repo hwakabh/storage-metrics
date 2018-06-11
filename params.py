@@ -1,7 +1,7 @@
 # Configuration parameters for each components
 
 # For Remote Docker engine
-docker_ip = '10.62.130.166'
+docker_ip = '10.62.130.167'
 docker_port = 2375
 docker_api_version = '1.37'
 
@@ -10,7 +10,7 @@ timeout = 100000
 
 
 # -- For Postgres
-pg_address = '10.62.130.166'
+pg_address = '10.62.130.167'
 pg_ports = [5432,]
 # pg_portmap = {5432: 32768}
 pg_portmap = {5432: 5432}
@@ -20,7 +20,7 @@ pg_database = 'postgres'
 pg_srcimg = 'postgres:latest'
 
 # -- For RabbitMQ
-mq_address = '10.62.130.166'
+mq_address = '10.62.130.167'
 mq_ports = [25672, 5672, 5671, 4369, 15672]
 # mq_portmap = {25672: 32776, 5672: 32777, 5671: 32778, 4369: 32779}
 mq_portmap = {25672: 25672, 5672: 5672, 5671: 5671, 4369: 4369, 15672: 15672}
@@ -28,9 +28,10 @@ mq_srcimg = 'rabbitmq:latest'
 mq_quename = 'smetric_queue'
 
 # -- For ElasticSearch
-es_address = '10.62.130.166'
+es_address = '10.62.130.167'
 es_ports = [9200,]
 es_portmap = {9200:9200}
+es_cname = 'smetrics_elasticsearch'
 index = {
     'xtremio':'xtremio',
     'isilon':'isilon'

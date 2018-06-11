@@ -1,0 +1,12 @@
+FROM python:latest
+
+RUN mkdir -p /emc
+RUN mkdir -p /var/log/collector/xtremio
+
+WORKDIR /emc
+
+COPY params.py params.py
+COPY common_functions.py common_functions.py
+COPY xtremio_collector.py xtremio_collector.py
+
+CMD ["/usr/bin/python xtremio_collector.py"]

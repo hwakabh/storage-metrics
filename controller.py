@@ -35,6 +35,16 @@ class Dockerengine:
             print('FOR_DEBUG>>> Container seems to be not existed ...')
             return None
 
+    # Check if image of launching container exists or not.
+    def check_launch_image(self, strmark):
+        img = self.client.images(name=strmark)
+        if img:
+            print('FOR_DEBUG>>> Image for ' + strmark + ' exist. Launching ' + strmark + ' containers...')
+            return True
+        else:
+            print('FOR_DEBUG>>> There is no image for ' + strmark + ' . ' + strmark + ' container failed to launch...')
+            return False
+
     def launch_container(self, strmark):
         hostports = ''
         hostconfig = ''
@@ -99,9 +109,6 @@ class ElasticSearch():
     def __init__(self):
         pass
 
-    def check_es_existence(self):
-        pass
-
     def get_data_from_postgres(self):
         pass
 
@@ -114,12 +121,17 @@ class ElasticSearch():
         pass
 
 
+def check_es_existence():
+    d = Dockerengine()
+    print('LOGGER>>> Checking if ElasticSearch exists or not ...')
+    running_containers = d.get_containers(isall=False)
+    return (param.es_cname in running_containers)
+
+
 # Integration method for execute all
 def send_all_data(storage):
     # storage = 'xtremio', 'isilon'
     pass
-
-
 
 
 def start_message_monitor():
@@ -146,11 +158,19 @@ def main():
 
     # --- start postgres
     print('LOGGER>>> Launching postgres container...')
-    d.launch_container(strmark='postgres')
+    if d.check_launch_image(strmark='postgres'):
+        d.launch_container(strmark='postgres')
+    else:
+        # Case if there's no image for postgres
+        pass
 
     # --- start rabbitmq
     print('LOGGER>>> Launching RabbitMQ container...')
-    d.launch_container(strmark='rabbitmq')
+    if d.check_launch_image(strmark='rabbitmq'):
+        d.launch_container(strmark='rabbitmq')
+    else:
+        # Case if there's no image for rabbitmq
+        pass
 
     # # --- start rabbit_monitor
     # start_message_monitor()
@@ -160,17 +180,30 @@ def main():
 
     # --- start xtremio_collector(data collected would be inserted to postgres by each collector)
     print('LOGGER>>> Launching XtremIO-Collector container...')
-    # d.launch_container(strmark='xtremio')
+    if d.check_launch_image(strmark=param.xtremio_imgname):
+        d.launch_container(strmark=param.xtremio_imgname)
+    else:
+        # Case if there's no image for smetric/xtremiocollector, start to build image
+        pass
 
     # --- start isilon_collector(data collected would be inserted to postgres by each collector)
     print('LOGGER>>> Launching Isilon-Collector container...')
-    # d.launch_container(strmark='isilon')
+    if d.check_launch_image(strmark=param.isilon_imgname):
+        d.launch_container(strmark=param.isilon_imgname)
+    else:
+        # Case if there's no image for smetric/isiloncollector, start to build image
+        pass
 
     # --- wait for collectors complete
 
     print('LOGGER>>> All the collector completed ...!!')
 
     # --- check if ElasticSearch exists
+    if check_es_existence():
+        print('LOGGER>>> ElasicSearch exist. Nothing to do in this step.')
+    else:
+        print('LOGGER>>> No ElasticSearch exists, creating new one.')
+        d.launch_container(strmark='elasticsearch')
 
     # --- send data from postgres to ElasticSearch
 
