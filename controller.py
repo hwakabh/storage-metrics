@@ -127,14 +127,14 @@ def check_es_existence():
     d = Dockerengine()
     print('LOGGER>>> Checking if ElasticSearch exists or not ...')
     running_containers = d.get_containers(isall=False)
-    return (param.es_cname in running_containers)
+    return param.es_cname in running_containers
 
 
 def build_image():
     print('DEBUG>>> Building up docker images...')
     f = open('./dockersrc/Dockerfile_Isilon', 'rb')
     d2 = Dockerengine()
-    response = [line for line in d2.client.build(fileobj=f, tag='smetrics/isiloncollector', path='/root/emc/')]
+    response = [line for line in d2.client.build(fileobj=f, tag='smetrics/isiloncollector')]
     for r in response:
         print(r)
 
@@ -212,7 +212,7 @@ def main():
 
     # --- check if ElasticSearch exists
     if check_es_existence():
-        print('LOGGER>>> ElasicSearch exist. Nothing to do in this step.')
+        print('LOGGER>>> ElasticSearch exist. Nothing to do in this step.')
     else:
         print('LOGGER>>> No ElasticSearch exists, creating new one.')
         d.launch_container(strmark='elasticsearch')
