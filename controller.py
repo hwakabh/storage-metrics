@@ -161,6 +161,12 @@ class ElasticSearch():
 #         print(r)
 #
 
+# def check_es_existence():
+#     d = Dockerengine()
+#     print('LOGGER>>> Checking if ElasticSearch exists or not ...')
+#     running_containers = d.get_containers(isall=False)
+#     return (param.es_cname in running_containers)
+
 # Integration method for execute all
 def send_all_data(storage):
     # storage = 'xtremio', 'isilon'
