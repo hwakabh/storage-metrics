@@ -5,8 +5,9 @@ RUN mkdir -p /var/log/collector/xtremio
 
 WORKDIR /smetrics
 
-COPY . params.py
-COPY . common_functions.py
-COPY . xtremio_collector.py
+COPY ./requirements.txt requirements.txt
+COPY ./params.py params.py
+COPY ./common_functions.py common_functions.py
+COPY ./xtremio_collector.py xtremio_collector.py
 
-CMD ["/usr/local/bin/python xtremio_collector.py"]
+RUN pip install -r requirements.txt

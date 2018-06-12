@@ -5,8 +5,9 @@ RUN mkdir -p /var/log/controller
 
 WORKDIR /smetrics
 
-COPY . params.py
-COPY . common_functions.py
-COPY . controller.py
+COPY ./requirements.txt requirements.txt
+COPY ./params.py params.py
+COPY ./common_functions.py common_functions.py
+COPY ./controller.py controller.py
 
-CMD ["/usr/local/bin/python controller.py"]
+RUN pip install -r requirements.txt

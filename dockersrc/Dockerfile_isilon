@@ -1,12 +1,13 @@
 FROM python:latest
 
 RUN mkdir -p /smetrics
-RUN mkdir -p /var/log/collector/xtremio
+RUN mkdir -p /var/log/collector/isilon
 
 WORKDIR /smetrics
 
-COPY . params.py
-COPY . common_functions.py
-COPY . isilon_collector.py
+COPY ./requirements.txt requirements.txt
+COPY ./params.py params.py
+COPY ./common_functions.py common_functions.py
+COPY ./isilon_collector.py isilon_collector.py
 
-CMD ["/usr/local/bin/python isilon_collector.py"]
+RUN pip install -r requirements.txt
