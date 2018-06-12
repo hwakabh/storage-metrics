@@ -46,55 +46,75 @@ class Dockerengine:
             return False
 
     def launch_container(self, strmark):
-        hostports = ''
-        hostconfig = ''
-        image_name = ''
         cname = 'smetrics_' + strmark
 
-        if strmark == 'postgres':
-            image_name = strmark + ':latest'
-            hostports = param.pg_ports
-            hostconfig = self.client.create_host_config(port_bindings=param.pg_portmap)
-        elif strmark == 'rabbitmq':
-            image_name = strmark + ':latest'
-            hostports = param.mq_ports
-            hostconfig = self.client.create_host_config(port_bindings=param.mq_portmap)
-        elif strmark == 'elasticsearch':
-            image_name = strmark + ':latest'
-            hostports = param.es_ports
-            hostconfig = self.client.create_host_config(port_bindings=param.es_portmap)
-        elif strmark == 'xtremio':
-            image_name = param.xtremio_imgname
-        elif strmark == 'isilon':
-            image_name = param.isilon_imgname
-        else:
-            image_name = strmark
-
         # Checking for avoiding name conflict
-        running_containers = self.get_containers(isall=False)
-        if cname in running_containers:
+        containers = self.get_containers(isall=False)
+        if cname in containers:
             print('LOGGER>>> Could not start container '
                   'because ' + strmark + ' container is already running with same name as ' + cname)
         else:
-            all_containers = self.get_containers(isall=True)
-            if cname in all_containers:
+            containers = self.get_containers(isall=True)
+            if cname in containers:
                 print('LOGGER>>> Could not start container '
                       'because ' + strmark + ' container was not removed with same name as ' + cname)
             else:
-                # case if no name conflict
+                hostports = ''
+                hostconfig = ''
+                image_name = ''
+
+                # Set parameters for launching container(case if no name conflict)
+                if strmark == 'postgres':
+                    image_name = strmark + ':latest'
+                    hostports = param.pg_ports
+                    hostconfig = self.client.create_host_config(port_bindings=param.pg_portmap)
+                elif strmark == 'rabbitmq':
+                    image_name = strmark + ':latest'
+                    hostports = param.mq_ports
+                    hostconfig = self.client.create_host_config(port_bindings=param.mq_portmap)
+                elif strmark == 'elasticsearch':
+                    image_name = strmark + ':latest'
+                    hostports = param.es_ports
+                    hostconfig = self.client.create_host_config(port_bindings=param.es_portmap)
+                elif strmark == 'xtremio':
+                    image_name = param.xtremio_imgname + ':latest'
+                elif strmark == 'isilon':
+                    image_name = param.isilon_imgname + ':latest'
+                else:
+                    print('FOR_DEBUG>>> Specified strmark seems to be wrong, check your parameters.')
+
+                # Start launching container
                 print('LOGGER>>> Creating ' + strmark + ' container and starting it ...')
                 c = None
-                try:
-                    c = self.client.create_container(image=image_name, detach=True, name=cname, ports=hostports, host_config=hostconfig)
-                    print('LOGGER>>> ' + strmark + ' container successfully created.')
-                except Exception as e:
-                    print('LOGGER>>> Error when creating ' + strmark + 'containers...')
-                    print('Errors : ', e.args)
+                # case if creating common containers
+                if (strmark == 'postgres') or (strmark == 'rabbitmq') or (strmark == 'elasticsearch'):
+                    try:
+                        c = self.client.create_container(image=image_name, detach=True, name=cname,
+                                                         ports=hostports, host_config=hostconfig)
+                        print('LOGGER>>> ' + strmark + ' container successfully created.')
+                    except Exception as e:
+                        print('LOGGER>>> Error when creating ' + strmark + ' containers...')
+                        print('Errors : ', e.args)
+                # case if creating storage collector containers
+                elif (strmark == 'xtremio') or (strmark == 'isilon'):
+                    cmd = '/usr/local/bin/python ' + strmark + '_collector.py'
+                    print(cmd)
+                    try:
+                        c = self.client.create_container(image=image_name, detach=True, name=cname,
+                                                         command=cmd)
+                        print('LOGGER>>> ' + strmark + ' container successfully created.')
+                    except Exception as e:
+                        print('LOGGER>>> Error when creating container of collector for ' + strmark + '...')
+                        print('Errors : ', e.args)
+                else:
+                    print('DONE...')
+
+                # Starting containers
                 try:
                     self.client.start(c)
                     print('LOGGER>>> ' + strmark + ' container started.')
                 except Exception as e:
-                    print('LOGGER>>> Error when starting ' + strmark + 'containers...')
+                    print('LOGGER>>> Error when starting ' + strmark + ' containers...')
                     print('Errors : ', e.args)
 
     def kill_container(self, strmark, isremove):
@@ -123,21 +143,14 @@ class ElasticSearch():
         pass
 
 
-def check_es_existence():
-    d = Dockerengine()
-    print('LOGGER>>> Checking if ElasticSearch exists or not ...')
-    running_containers = d.get_containers(isall=False)
-    return param.es_cname in running_containers
-
-
-def build_image():
-    print('DEBUG>>> Building up docker images...')
-    f = open('./dockersrc/Dockerfile_Isilon', 'rb')
-    d2 = Dockerengine()
-    response = [line for line in d2.client.build(fileobj=f, tag='smetrics/isiloncollector')]
-    for r in response:
-        print(r)
-
+# def build_image():
+#     print('DEBUG>>> Building up docker images...')
+#     f = open('./dockersrc/Dockerfile_Isilon', 'rb')
+#     d2 = Dockerengine()
+#     response = [line for line in d2.client.build(fileobj=f, tag='smetrics/isiloncollector')]
+#     for r in response:
+#         print(r)
+#
 
 # Integration method for execute all
 def send_all_data(storage):
@@ -186,17 +199,16 @@ def main():
     # # --- start rabbit_monitor
     # start_message_monitor()
 
-    # --- initialize task-status of each collector
-    initialize_collector_status()
+    # # --- initialize task-status of each collector
+    # initialize_collector_status()
 
     # --- start xtremio_collector(data collected would be inserted to postgres by each collector)
     if d.check_launch_image(strmark=param.xtremio_imgname):
         print('LOGGER>>> Launching XtremIO-Collector container...')
-        # d.launch_container(strmark='xtremio')
+        d.launch_container(strmark='xtremio')
     else:
         # Case if there's no image for smetric/xtremiocollector, start to build image and launch container
-        print('DEBUG>>> Docker image build end...')
-        build_image()
+        pass
 
     # --- start isilon_collector(data collected would be inserted to postgres by each collector)
     if d.check_launch_image(strmark=param.isilon_imgname):
@@ -210,12 +222,12 @@ def main():
 
     print('LOGGER>>> All the collector completed ...!!')
 
-    # --- check if ElasticSearch exists
-    if check_es_existence():
-        print('LOGGER>>> ElasticSearch exist. Nothing to do in this step.')
-    else:
-        print('LOGGER>>> No ElasticSearch exists, creating new one.')
-        d.launch_container(strmark='elasticsearch')
+    # # --- check if ElasticSearch exists
+    # if check_es_existence():
+    #     print('LOGGER>>> ElasticSearch exist. Nothing to do in this step.')
+    # else:
+    #     print('LOGGER>>> No ElasticSearch exists, creating new one.')
+    d.launch_container(strmark='elasticsearch')
 
     # --- send data from postgres to ElasticSearch
 
