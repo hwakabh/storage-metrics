@@ -1,13 +1,8 @@
 FROM python:latest
 
-RUN mkdir -p /smetrics
-RUN mkdir -p /var/log/collector/isilon
+COPY requirements.txt requirements.txt
+COPY params.py params.py
+COPY common_functions.py common_functions.py
+COPY isilon_collector.py isilon_collector.py
 
-WORKDIR /smetrics
-
-COPY ./requirements.txt requirements.txt
-COPY ./params.py params.py
-COPY ./common_functions.py common_functions.py
-COPY ./isilon_collector.py isilon_collector.py
-
-RUN pip install -r requirements.txt
+RUN /usr/local/bin/pip install -r requirements.txt
