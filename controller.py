@@ -29,8 +29,9 @@ class Dockerengine:
 
     def get_container_id(self, strmark):
         containers = self.get_containers(isall=True)
-        if strmark in containers:
-            return containers.get(strmark)
+        cname = 'smetrics_' + strmark
+        if cname in containers:
+            return containers.get(cname)
         else:
             print('FOR_DEBUG>>> Container seems to be not existed ...')
             return None
@@ -45,6 +46,9 @@ class Dockerengine:
             print('FOR_DEBUG>>> There is no image for ' + strmark + '. ' + strmark + ' container failed to launch...')
             return False
 
+    def launch_storage_container(self, strmark):
+        print('Launching storage containers...')
+
     def launch_container(self, strmark):
         cname = 'smetrics_' + strmark
 
@@ -53,69 +57,74 @@ class Dockerengine:
         if cname in containers:
             print('LOGGER>>> Could not start container '
                   'because ' + strmark + ' container is already running with same name as ' + cname)
+            print('LOGGER>>> Stop and Force-removing container ' + cname)
+            self.kill_container(strmark=strmark, isremove=True)
         else:
             containers = self.get_containers(isall=True)
             if cname in containers:
                 print('LOGGER>>> Could not start container '
                       'because ' + strmark + ' container was not removed with same name as ' + cname)
-            else:
-                hostports = ''
-                hostconfig = ''
-                image_name = ''
+                print('LOGGER>>> Removing remaining container ' + cname)
+                self.kill_container(strmark=strmark, isremove=True)
 
-                # Set parameters for launching container(case if no name conflict)
-                if strmark == 'postgres':
-                    image_name = strmark + ':latest'
-                    hostports = param.pg_ports
-                    hostconfig = self.client.create_host_config(port_bindings=param.pg_portmap)
-                elif strmark == 'rabbitmq':
-                    image_name = strmark + ':latest'
-                    hostports = param.mq_ports
-                    hostconfig = self.client.create_host_config(port_bindings=param.mq_portmap)
-                elif strmark == 'elasticsearch':
-                    image_name = strmark + ':latest'
-                    hostports = param.es_ports
-                    hostconfig = self.client.create_host_config(port_bindings=param.es_portmap)
-                elif strmark == 'xtremio':
-                    image_name = param.xtremio_imgname + ':latest'
-                elif strmark == 'isilon':
-                    image_name = param.isilon_imgname + ':latest'
-                else:
-                    print('FOR_DEBUG>>> Specified strmark seems to be wrong, check your parameters.')
+        # Set parameters for launching container(case if no name conflict)
+        hostports = ''
+        hostconfig = ''
+        image_name = ''
 
-                # Start launching container
-                print('LOGGER>>> Creating ' + strmark + ' container and starting it ...')
-                c = None
-                # case if creating common containers
-                if (strmark == 'postgres') or (strmark == 'rabbitmq') or (strmark == 'elasticsearch'):
-                    try:
-                        c = self.client.create_container(image=image_name, detach=True, name=cname,
-                                                         ports=hostports, host_config=hostconfig)
-                        print('LOGGER>>> ' + strmark + ' container successfully created.')
-                    except Exception as e:
-                        print('LOGGER>>> Error when creating ' + strmark + ' containers...')
-                        print('Errors : ', e.args)
-                # case if creating storage collector containers
-                elif (strmark == 'xtremio') or (strmark == 'isilon'):
-                    cmd = '/usr/local/bin/python ' + strmark + '_collector.py'
-                    print(cmd)
-                    try:
-                        c = self.client.create_container(image=image_name, detach=True, name=cname,
-                                                         command=cmd)
-                        print('LOGGER>>> ' + strmark + ' container successfully created.')
-                    except Exception as e:
-                        print('LOGGER>>> Error when creating container of collector for ' + strmark + '...')
-                        print('Errors : ', e.args)
-                else:
-                    print('DONE...')
+        if strmark == 'postgres':
+            image_name = strmark + ':latest'
+            hostports = param.pg_ports
+            hostconfig = self.client.create_host_config(port_bindings=param.pg_portmap)
+        elif strmark == 'rabbitmq':
+            image_name = strmark + ':latest'
+            hostports = param.mq_ports
+            hostconfig = self.client.create_host_config(port_bindings=param.mq_portmap)
+        elif strmark == 'elasticsearch':
+            image_name = strmark + ':latest'
+            hostports = param.es_ports
+            hostconfig = self.client.create_host_config(port_bindings=param.es_portmap)
+        elif strmark == 'xtremio':
+            image_name = param.xtremio_imgname + ':latest'
+            self.launch_storage_container('xtremio')
+        elif strmark == 'isilon':
+            image_name = param.isilon_imgname + ':latest'
+            self.launch_storage_container('isilon')
+        else:
+            print('FOR_DEBUG>>> Specified strmark seems to be wrong, check your parameters.')
 
-                # Starting containers
-                try:
-                    self.client.start(c)
-                    print('LOGGER>>> ' + strmark + ' container started.')
-                except Exception as e:
-                    print('LOGGER>>> Error when starting ' + strmark + ' containers...')
-                    print('Errors : ', e.args)
+        # Start launching container(case if creating common containers)
+        print('LOGGER>>> Creating ' + strmark + ' container and starting it ...')
+        c = None
+        if (strmark == 'postgres') or (strmark == 'rabbitmq') or (strmark == 'elasticsearch'):
+            try:
+                c = self.client.create_container(image=image_name, detach=True, name=cname,
+                                                 ports=hostports, host_config=hostconfig)
+                print('LOGGER>>> ' + strmark + ' container successfully created.')
+            except Exception as e:
+                print('LOGGER>>> Error when creating ' + strmark + ' containers...')
+                print('Errors : ', e.args)
+        # case if creating storage collector containers
+        elif (strmark == 'xtremio') or (strmark == 'isilon'):
+            cmd = '/usr/local/bin/python ' + strmark + '_collector.py'
+            print('LOGGER>>> Try executing ' + cmd + ' on container...')
+            try:
+                c = self.client.create_container(image=image_name, detach=True, name=cname,
+                                                 command=cmd)
+                print('LOGGER>>> ' + strmark + ' container successfully created.')
+            except Exception as e:
+                print('LOGGER>>> Error when creating container of collector for ' + strmark + '...')
+                print('Errors : ', e.args)
+        else:
+            print('DONE...')
+
+        # Starting containers
+        try:
+            self.client.start(c)
+            print('LOGGER>>> ' + strmark + ' container started.')
+        except Exception as e:
+            print('LOGGER>>> Error when starting ' + strmark + ' containers...')
+            print('Errors : ', e.args)
 
     def kill_container(self, strmark, isremove):
         container_id = self.get_container_id(strmark)
@@ -213,7 +222,7 @@ def main():
     # --- start isilon_collector(data collected would be inserted to postgres by each collector)
     if d.check_launch_image(strmark=param.isilon_imgname):
         print('LOGGER>>> Launching Isilon-Collector container...')
-        # d.launch_container(strmark='isilon')
+        d.launch_container(strmark='isilon')
     else:
         # Case if there's no image for smetric/isiloncollector, start to build image and launch container
         pass
