@@ -69,8 +69,8 @@ def main():
     # Instantiate Collector Class with constructor
     isilon_collector = Collector(strmark='isilon')
 
-    # # Send message to rabbitmq
-    # isilon_collector.send_message('[tmp]Isilon_Start')
+    # Send message to rabbitmq
+    isilon_collector.send_message('Start')
 
     # --- Run main task(capacity)
     # Create capacity table in postgres
@@ -231,8 +231,8 @@ def main():
     # Insert capacity information to postgres
     isilon_collector.send_data_to_postgres(data=bandwidth_results, data_type='bandwidth')
 
-    # # Send message to rabbitmq
-    # isilon_collector.send_message('[tmp]Isilon_END')
+    # Send message to rabbitmq
+    isilon_collector.send_message('END')
 
     print('ISILON_LOGGER>>> Isilon Collector has done its task...!!')
 

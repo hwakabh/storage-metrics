@@ -11,7 +11,7 @@ def get_xtremio_information(ip, user, passwd):
         ret = get_https_response_with_json(user, passwd, api)
     except Exception:
         print('XTREMIO_LOGGER>>> Exception is throwed by common function. '
-          'Error when getting information from XtremIO ...')
+              'Error when getting information from XtremIO ...')
     else:
         # Currently only considering single cluster
         clustername = ret['clusters'][0]['name']
@@ -83,8 +83,8 @@ def main():
     # Instantiate Collector Class with constructor
     xtremio_collector = Collector(strmark='xtremio')
 
-    # # Send message to rabbitmq
-    # xtremio_collector.send_message('[tmp]XtremIO_Start')
+    # Send message to rabbitmq
+    xtremio_collector.send_message('Start')
 
     # --- Run main task(capacity)
     # Create capacity table in postgres
@@ -195,8 +195,8 @@ def main():
     # Insert capacity information to postgres
     xtremio_collector.send_data_to_postgres(data=cl_perf_results, data_type='cl_performance')
 
-    # # Send message to rabbitmq
-    # xtremio_collector.send_message('[tmp]XtremIO_END')
+    # Send message to rabbitmq
+    xtremio_collector.send_message('END')
 
     print('XTREMIO_LOGGER>>> XtremIO Collector has done its task...!!')
 
