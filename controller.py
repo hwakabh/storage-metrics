@@ -2,6 +2,7 @@
 # http://docker-py.readthedocs.io/en/stable/api.html#module-docker.api.container
 import docker
 import params as param
+import common_functions as common
 from rabbit_monitor import Consumer
 from rabbit_monitor import TaskState
 
@@ -46,8 +47,35 @@ class Dockerengine:
             print('FOR_DEBUG>>> There is no image for ' + strmark + '. ' + strmark + ' container failed to launch...')
             return False
 
+    def start_container(self, strmark):
+        pass
+
     def launch_storage_container(self, strmark):
-        print('Launching storage containers...')
+        image_name = ''
+        cname = 'smetrics_' + strmark
+
+        if strmark == 'xtremio':
+            image_name = param.xtremio_imgname + ':latest'
+        elif strmark == 'isilon':
+            image_name = param.isilon_imgname + ':latest'
+        else:
+            print('LOGGER>>> Specified storage does not exist.')
+
+        print('LOGGER>>> Launching storage containers...')
+        c = None
+        if (strmark == 'xtremio') or (strmark == 'isilon'):
+            cmd = '/usr/local/bin/python ' + strmark + '_collector.py'
+            print('LOGGER>>> Try executing ' + cmd + ' on container...')
+            try:
+                c = self.client.create_container(image=image_name, detach=True, name=cname,
+                                                 command=cmd)
+                print('LOGGER>>> ' + strmark + ' container successfully created.')
+            except Exception as e:
+                print('LOGGER>>> Error when creating container of collector for ' + strmark + '...')
+                print('Errors : ', e.args)
+        else:
+            pass
+        return c
 
     def launch_container(self, strmark):
         cname = 'smetrics_' + strmark
@@ -84,12 +112,6 @@ class Dockerengine:
             image_name = strmark + ':latest'
             hostports = param.es_ports
             hostconfig = self.client.create_host_config(port_bindings=param.es_portmap)
-        elif strmark == 'xtremio':
-            image_name = param.xtremio_imgname + ':latest'
-            self.launch_storage_container('xtremio')
-        elif strmark == 'isilon':
-            image_name = param.isilon_imgname + ':latest'
-            self.launch_storage_container('isilon')
         else:
             print('FOR_DEBUG>>> Specified strmark seems to be wrong, check your parameters.')
 
@@ -106,17 +128,9 @@ class Dockerengine:
                 print('Errors : ', e.args)
         # case if creating storage collector containers
         elif (strmark == 'xtremio') or (strmark == 'isilon'):
-            cmd = '/usr/local/bin/python ' + strmark + '_collector.py'
-            print('LOGGER>>> Try executing ' + cmd + ' on container...')
-            try:
-                c = self.client.create_container(image=image_name, detach=True, name=cname,
-                                                 command=cmd)
-                print('LOGGER>>> ' + strmark + ' container successfully created.')
-            except Exception as e:
-                print('LOGGER>>> Error when creating container of collector for ' + strmark + '...')
-                print('Errors : ', e.args)
+            c = self.launch_storage_container(strmark=strmark)
         else:
-            print('DONE...')
+            print('FOR_DEBUG>>> Specified strmark seems to be wrong, check your parameters.')
 
         # Starting containers
         try:
@@ -161,11 +175,22 @@ class ElasticSearch():
 #         print(r)
 #
 
-# def check_es_existence():
-#     d = Dockerengine()
-#     print('LOGGER>>> Checking if ElasticSearch exists or not ...')
-#     running_containers = d.get_containers(isall=False)
-#     return (param.es_cname in running_containers)
+def check_es_existence():
+    d = Dockerengine()
+    es_cname = 'smetrics_elasticsearch'
+    print('LOGGER>>> Checking if ElasticSearch exists or not ...')
+    running_containers = d.get_containers(isall=False)
+    all_containers = d.get_containers(isall=True)
+
+    # Elasticsearch states: RUNNING, STOPPED, NONE
+    if es_cname in running_containers:
+        return 'RUNNING'
+    else:
+        if es_cname in all_containers:
+            return 'STOPPED'
+        else:
+            return 'NONE'
+
 
 # Integration method for execute all
 def send_all_data(storage):
@@ -237,12 +262,15 @@ def main():
 
     print('LOGGER>>> All the collector completed ...!!')
 
-    # # --- check if ElasticSearch exists
-    # if check_es_existence():
-    #     print('LOGGER>>> ElasticSearch exist. Nothing to do in this step.')
-    # else:
-    #     print('LOGGER>>> No ElasticSearch exists, creating new one.')
-    d.launch_container(strmark='elasticsearch')
+    # --- check if ElasticSearch exists
+    if check_es_existence() == 'RUNNING':
+        print('LOGGER>>> ElasticSearch exist. Nothing to do in this step.')
+    elif check_es_existence() == 'STOPPED':
+        print('LOGGER>>> ElasticSearch exists, but stopped. Attempting to start it...')
+        d.start_container(strmark='elasticsearch')
+    else:
+        print('LOGGER>>> No ElasticSearch exists, creating new one.')
+        d.launch_container(strmark='elasticsearch')
 
     # --- send data from postgres to ElasticSearch
 
