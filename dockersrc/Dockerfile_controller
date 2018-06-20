@@ -3,6 +3,7 @@ FROM python:latest
 COPY requirements.txt requirements.txt
 COPY params.py params.py
 COPY common_functions.py common_functions.py
+COPY rabbit_monitor.py rabbit_monitor.py
 COPY controller.py controller.py
 
 RUN /usr/local/bin/pip install -r requirements.txt

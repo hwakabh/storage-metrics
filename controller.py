@@ -1,10 +1,10 @@
 # to manage remote docker host, use APIClient class in docker-py, not docker.from_env()
 # http://docker-py.readthedocs.io/en/stable/api.html#module-docker.api.container
 import docker
+import time
 import params as param
 import common_functions as common
 from rabbit_monitor import Consumer
-from rabbit_monitor import TaskState
 
 
 class Dockerengine:
@@ -200,12 +200,13 @@ def send_all_data(storage):
 
 def start_message_monitor():
     rabbit = Consumer()
+    rabbit.receive_message(strmark='xtremio')
+    rabbit.receive_message(strmark='isilon')
 
-
-def initialize_collector_status():
-    ts = TaskState()
-    print(ts.xtermioc_status)
-    print(ts.isilonc_status)
+# def initialize_collector_status():
+#     ts = TaskState()
+#     print(ts.xtermioc_status)
+#     print(ts.isilonc_status)
 
 
 def main():
@@ -236,11 +237,14 @@ def main():
         # Case if there's no image for rabbitmq
         pass
 
-    # # --- start rabbit_monitor
-    # start_message_monitor()
+    # --- start rabbit_monitor
+    start_message_monitor()
 
     # # --- initialize task-status of each collector
     # initialize_collector_status()
+
+    print('>>>>> TIME TO WAKE UP RABBITMQ CONTAINTER ....')
+    time.sleep(15)
 
     # --- start xtremio_collector(data collected would be inserted to postgres by each collector)
     if d.check_launch_image(strmark=param.xtremio_imgname):
