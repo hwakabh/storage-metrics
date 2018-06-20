@@ -2,10 +2,19 @@
 
 cd /root/storage-metrics/
 
-echo "Building XtremIO container image..."
+echo ">>>>>>>>> Building Collector container image..."
+docker build -t smetrics/controller:latest -f ./dockersrc/Dockerfile_controller .
+
+echo ""
+echo ""
+echo ">>>>>>>>> Building XtremIO container image..."
 docker build -t smetrics/xtremiocollector:latest -f ./dockersrc/Dockerfile_xtremio .
 
-echo "Building Isilon container image..."
+echo ""
+echo ""
+echo ">>>>>>>>> Building Isilon container image..."
 docker build -t smetrics/isiloncollector:latest -f ./dockersrc/Dockerfile_isilon .
 
-echo "Built all images for storage-collectors"
+echo ""
+echo ""
+echo ">>>>>>>>> Built all images for storage-collectors !!"
