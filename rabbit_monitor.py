@@ -1,5 +1,4 @@
 import pika
-import time
 import params as param
 
 
@@ -16,13 +15,20 @@ class Consumer:
             # create channel to send message
             channel.queue_declare(queue=strmark)
 
-            print('[*] Waiting for messages. To exit, press \'Control+C\'')
+            print('FOR_DEBUG>>> Waiting for messages from Channel ' + strmark + '.')
 
             def callback(ch, method, properties, body):
-                print('FOR_DEBUG>>> Received %s' % (body, ))
+                print('FOR_DEBUG>>> Received %s ' % (body, ))
 
             channel.basic_consume(callback, queue=strmark, no_ack=True)
-            channel.start_consuming()
+            try:
+                channel.start_consuming()
+            except KeyboardInterrupt:
+                channel.stop_consuming()
+                return True
+            connection.close()
+
+            print('LOGGER>>> Finish receiving messages from Channel ' + strmark + '.')
 
         except Exception as e:
             print('LOGGER>>> Something wrong with RabbitMQ ...')

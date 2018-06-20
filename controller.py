@@ -200,8 +200,13 @@ def send_all_data(storage):
 
 def start_message_monitor():
     rabbit = Consumer()
-    rabbit.receive_message(strmark='xtremio')
-    rabbit.receive_message(strmark='isilon')
+    is_complete_xtremio = rabbit.receive_message(strmark='xtremio')
+    is_complete_isilon = rabbit.receive_message(strmark='isilon')
+
+    if is_complete_xtremio and is_complete_isilon:
+        return True
+    else:
+        return False
 
 # def initialize_collector_status():
 #     ts = TaskState()
@@ -237,14 +242,11 @@ def main():
         # Case if there's no image for rabbitmq
         pass
 
-    # --- start rabbit_monitor
-    start_message_monitor()
-
     # # --- initialize task-status of each collector
     # initialize_collector_status()
 
-    print('>>>>> TIME TO WAKE UP RABBITMQ CONTAINTER ....')
-    time.sleep(15)
+    print('LOGGER>>> Waiting for waking up RabbitMQ container for 5 Seconds ....')
+    time.sleep(5)
 
     # --- start xtremio_collector(data collected would be inserted to postgres by each collector)
     if d.check_launch_image(strmark=param.xtremio_imgname):
@@ -263,31 +265,32 @@ def main():
         pass
 
     # --- wait for collectors complete
+    is_complete = start_message_monitor()
+    if is_complete:
+        print('LOGGER>>> All the collector completed ...!!')
 
-    print('LOGGER>>> All the collector completed ...!!')
+        # --- check if ElasticSearch exists
+        if check_es_existence() == 'RUNNING':
+            print('LOGGER>>> ElasticSearch exist. Nothing to do in this step.')
+        elif check_es_existence() == 'STOPPED':
+            print('LOGGER>>> ElasticSearch exists, but stopped. Attempting to start it...')
+            d.start_container(strmark='elasticsearch')
+        else:
+            print('LOGGER>>> No ElasticSearch exists, creating new one.')
+            d.launch_container(strmark='elasticsearch')
 
-    # --- check if ElasticSearch exists
-    if check_es_existence() == 'RUNNING':
-        print('LOGGER>>> ElasticSearch exist. Nothing to do in this step.')
-    elif check_es_existence() == 'STOPPED':
-        print('LOGGER>>> ElasticSearch exists, but stopped. Attempting to start it...')
-        d.start_container(strmark='elasticsearch')
-    else:
-        print('LOGGER>>> No ElasticSearch exists, creating new one.')
-        d.launch_container(strmark='elasticsearch')
+        # --- send data from postgres to ElasticSearch
 
-    # --- send data from postgres to ElasticSearch
+        # --- finally kill and remove container Postgres and RabbitMQ
+        # # Stop container(if isremove=True, container would be destroyed)
+        # d.kill_container('clever_wing', isremove=False)
+        # # Stop and remove all containers
+        # for ck in containers.keys():
+        #     print(ck)
+        #     d.kill_container(ck, isremove=True)
 
-    # --- finally kill and remove container Postgres and RabbitMQ
-    # # Stop container(if isremove=True, container would be destroyed)
-    # d.kill_container('clever_wing', isremove=False)
-    # # Stop and remove all containers
-    # for ck in containers.keys():
-    #     print(ck)
-    #     d.kill_container(ck, isremove=True)
-
-    containers = d.get_containers(isall=True)
-    print(containers)
+        containers = d.get_containers(isall=True)
+        print(containers)
 
 
 if __name__ == '__main__':
