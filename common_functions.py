@@ -52,10 +52,10 @@ class Collector:
         try:
             channel = connection.channel()
             # create channel to send message
-            channel.queue_declare(queue=param.mq_quename)
-            print(self.strmark.upper() + '_LOGGER>>> Create channel ' + param.mq_quename + ' with RabbitMQ...')
-            channel.basic_publish(exchange='', routing_key=param.mq_quename, body=msg)
-            print(self.strmark.upper() + '_LOGGER>>> [x]Messaage \'' + msg + '\' successfully sent to ' + param.mq_quename)
+            channel.queue_declare(queue=self.strmark)
+            print(self.strmark.upper() + '_LOGGER>>> Create channel ' + self.strmark + ' with RabbitMQ...')
+            channel.basic_publish(exchange='', routing_key=self.strmark, body=msg)
+            print(self.strmark.upper() + '_LOGGER>>> Messaage \'' + msg + '\' successfully sent to ' + self.strmark)
             return_value = True
         except Exception as e:
             print(self.strmark.upper() + '_LOGGER>>> Error when sending message ...')

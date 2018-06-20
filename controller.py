@@ -113,7 +113,7 @@ class Dockerengine:
             hostports = param.es_ports
             hostconfig = self.client.create_host_config(port_bindings=param.es_portmap)
         else:
-            print('FOR_DEBUG>>> Specified strmark seems to be wrong, check your parameters.')
+            pass
 
         # Start launching container(case if creating common containers)
         print('LOGGER>>> Creating ' + strmark + ' container and starting it ...')
