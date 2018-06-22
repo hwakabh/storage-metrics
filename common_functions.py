@@ -38,12 +38,12 @@ class Collector:
     def __init__(self, strmark):
         self.strmark = strmark
 
-    def create_table(self, type, columns):
-        # Expected types: capacity, quota, cpu bandwidth
-        table_name = self.strmark + '_' + type + '_table'
-        print(self.strmark.upper() + '_LOGGER>>> Creating ' + type + ' table on Postgres ...')
+    def create_table(self, metric, columns):
+        # Expected metric: capacity, quota, cpu bandwidth
+        table_name = self.strmark + '_' + metric + '_table'
+        print(self.strmark.upper() + '_LOGGER>>> Creating ' + metric + ' table on Postgres ...')
         create_table(table_name, columns)
-        print(self.strmark.upper() + '_LOGGER>>> Creating ' + type + ' table Done.')
+        print(self.strmark.upper() + '_LOGGER>>> Creating ' + metric + ' table Done.')
 
     # RabbitMQ : each collector is 'Producer' and would 'publish(=Send)' message
     def send_message(self, msg):
