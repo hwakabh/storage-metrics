@@ -151,33 +151,63 @@ class Dockerengine:
             self.client.stop(container=container_id)
 
 
-def send_data_to_es(pg_ret):
+def send_data_to_es(strmark):
+    # Instantiate ElasticSearch Class
     es_url = 'http://' + param.es_address + ':' + str(param.es_ports[0])
     es = Elasticsearch(es_url)
-    es.index(index='xtremio', doc_type='capacity', id=1, body={'foo1': 'bar1', 'foo2': 'bar2'})
-    print(pg_ret)
 
-    print('-----For check')
-    res = es.search(index='xtremio', body={"query": {"match_all": {}}})
-    print(json.dumps(res, indent=4))
+    metrics = []
+    if strmark == 'xtremio':
+        metrics = ['capacity', 'cl_performance', 'sc_performance']
+    elif strmark == 'isilon':
+        metrics = ['capacity', 'quota', 'cpu', 'bandwidth']
+    else:
+        print('LOGGER>>> Please check strmark')
+
+    for m in metrics:
+        body = get_data_from_postgres(strmark=strmark, metric=m)
+        if type(body) is list:
+            for b in body:
+                es.index(index=strmark, doc_type=m, body=b)
+        else:
+            es.index(index=strmark, doc_type=m, body=body)
+
+    print('LOGGER>>> Data sent to ElasticSearch.')
+    res = es.search(index=strmark, body={"query": {"match_all": {}}})
+    print(json.dumps(res))
 
 
 def get_data_from_postgres(strmark, metric):
-    tablename = strmark + '_' + metric + '_table'
+    table_name = strmark + '_' + metric + '_table'
     pg = common.Postgres(hostname=param.pg_address, port=param.pg_ports[0],
                          username=param.pg_username, password=param.pg_password, database=param.pg_database)
     pg.connect()
     cur = pg.get_connection().cursor()
-    q = 'SELECT * FROM ' + tablename
+    q = 'SELECT * FROM ' + table_name
     cur.execute(q)
     ret = cur.fetchall()
-    return ret
+    table_header = [desc[0] for desc in cur.description]
+
+    # Convert query result to Json for posting ElasticSearch
+    json_ret = parse_to_json(header=table_header, data=ret)
+
+    return json_ret
 
 
 # Create queries and json objects to posting ElasticSearch
-def parse_to_json(ret):
-    pass
-
+def parse_to_json(header, data):
+    json_data = {}
+    if len(data) == 1:
+        for i in range(len(header)):
+            json_data[str(header[i])] = data[0][i]
+        return json_data
+    else:
+        return_array = []
+        for d in range(len(data)):
+            for i, h in enumerate(header):
+                json_data[h] = data[d][i]
+            return_array.append(json_data)
+        return return_array
 
 # def build_image():
 #     print('DEBUG>>> Building up docker images...')
@@ -204,12 +234,6 @@ def check_es_existence():
             return 'STOPPED'
         else:
             return 'NONE'
-
-
-# Integration method for execute all
-def send_all_data():
-    # strmark = 'xtremio', 'isilon'
-    pass
 
 
 # To consume all messages
@@ -287,7 +311,8 @@ def main():
             d.launch_container(strmark='elasticsearch')
 
         # --- send data from postgres to ElasticSearch
-        send_all_data()
+        send_data_to_es(strmark='xtremio')
+        send_data_to_es(strmark='isilon')
 
     # -- print out containers for checking
     containers = d.get_containers(isall=True)
@@ -301,11 +326,6 @@ def main():
     #     print(ck)
     #     d.kill_container(ck, isremove=True)
     print('LOGGER>>> Cleaning up container done. Controller has done its task ...!!')
-
-    # ES test
-    xtremio_caps = get_data_from_postgres(strmark='xtremio', metric='capacity')
-    isilon_caps = get_data_from_postgres(strmark='isilon', metric='capacity')
-    send_data_to_es(xtremio_caps)
 
 
 if __name__ == '__main__':
