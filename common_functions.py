@@ -119,7 +119,8 @@ class Collector:
                 # Execute query
                 cur.execute(q.replace(', )', ')'))
         else:
-            print(self.strmark.upper() + '_LOGGER>>> Data-Type specified seemed to be wrong, data-type expecting follows bellow: \n'
+            print(self.strmark.upper() + '_LOGGER>>> Data-Type specified seemed to be wrong, '
+                                         'data-type expecting follows bellow: \n'
                                          '\t Isilon : [capacity, quota, cpu, bandwidth] \n'
                                          '\t XtremIO : [capacity, sc_performance, cl_performance] \n'
                   )

@@ -86,7 +86,7 @@ def main():
     for k, v in capacity_maps.items():
         c_columns += k + ' ' + v + ','
     c_columns += ')'
-    isilon_collector.create_table(metric='capacity', columns=c_columns.replace(',)',')'))
+    isilon_collector.create_table(metric='capacity', columns=c_columns.replace(',)', ')'))
 
     # Get capacity information
     c_results = {}

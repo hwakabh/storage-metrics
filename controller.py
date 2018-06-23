@@ -150,20 +150,31 @@ class Dockerengine:
             self.client.stop(container=container_id)
 
 
-class ElasticSearch():
-    def __init__(self):
-        pass
-
-    def get_data_from_postgres(self):
-        pass
+class Elasticsearch:
+    def __init__(self, hostname, port):
+        self.hostname = hostname
+        self.port = port
 
     # Create queries and json objects to posting ElasticSearch
     def json_builder(self):
         pass
 
     # HTTP post according to flag specified
-    def send_data_to_es(self):
+    def send_data_to_es(self, pg_ret):
+        pg_ret = ''
         pass
+
+
+def get_data_from_postgres(strmark, metric):
+    tablename = strmark + '_' + metric + '_table'
+    pg = common.Postgres(hostname=param.pg_address, port=param.pg_ports[0],
+                         username=param.pg_username, password=param.pg_password, database=param.pg_database)
+    pg.connect()
+    cur = pg.get_connection().cursor()
+    q = 'SELECT * FROM ' + tablename
+    cur.execute(q)
+    ret = cur.fetchall()
+    return ret
 
 
 # def build_image():
@@ -174,6 +185,7 @@ class ElasticSearch():
 #     for r in response:
 #         print(r)
 #
+
 
 def check_es_existence():
     d = Dockerengine()
@@ -193,11 +205,12 @@ def check_es_existence():
 
 
 # Integration method for execute all
-def send_all_data(storage):
-    # storage = 'xtremio', 'isilon'
+def send_all_data():
+    # strmark = 'xtremio', 'isilon'
     pass
 
 
+# To consume all messages
 def start_message_monitor():
     rabbit = Consumer()
     is_complete_xtremio = rabbit.receive_message(strmark='xtremio')
@@ -207,11 +220,6 @@ def start_message_monitor():
         return True
     else:
         return False
-
-# def initialize_collector_status():
-#     ts = TaskState()
-#     print(ts.xtermioc_status)
-#     print(ts.isilonc_status)
 
 
 def main():
@@ -242,9 +250,6 @@ def main():
         # Case if there's no image for rabbitmq
         pass
 
-    # # --- initialize task-status of each collector
-    # initialize_collector_status()
-
     print('LOGGER>>> Waiting for waking up RabbitMQ container for 5 Seconds ....')
     time.sleep(5)
 
@@ -264,7 +269,7 @@ def main():
         # Case if there's no image for smetric/isiloncollector, start to build image and launch container
         pass
 
-    # --- wait for collectors complete
+    # --- wait for collectors complete(Check if 2 messages in each channel)
     is_complete = start_message_monitor()
     if is_complete:
         print('LOGGER>>> All the collector completed ...!!')
@@ -280,17 +285,23 @@ def main():
             d.launch_container(strmark='elasticsearch')
 
         # --- send data from postgres to ElasticSearch
+        send_all_data()
 
-        # --- finally kill and remove container Postgres and RabbitMQ
-        # # Stop container(if isremove=True, container would be destroyed)
-        # d.kill_container('clever_wing', isremove=False)
-        # # Stop and remove all containers
-        # for ck in containers.keys():
-        #     print(ck)
-        #     d.kill_container(ck, isremove=True)
+    # -- print out containers for checking
+    containers = d.get_containers(isall=True)
+    print(containers)
 
-        containers = d.get_containers(isall=True)
-        print(containers)
+    # --- finally kill and remove container Postgres and RabbitMQ
+    # # Stop container(if isremove=True, container would be destroyed)
+    # d.kill_container('clever_wing', isremove=False)
+    # # Stop and remove all containers
+    # for ck in containers.keys():
+    #     print(ck)
+    #     d.kill_container(ck, isremove=True)
+    print('LOGGER>>> Cleaning up container done. Controller has done its task ...!!')
+    # es = Elasticsearch(hostname=param.es_address, port=param.es_ports)
+    xtremio_caps = get_data_from_postgres(strmark='xtremio', metric='capacity')
+    isilon_caps = get_data_from_postgres(strmark='isilon', metric='capacity')
 
 
 if __name__ == '__main__':
