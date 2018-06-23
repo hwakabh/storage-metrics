@@ -1,10 +1,11 @@
 # to manage remote docker host, use APIClient class in docker-py, not docker.from_env()
 # http://docker-py.readthedocs.io/en/stable/api.html#module-docker.api.container
 import docker
-import time
+import json
 import params as param
 import common_functions as common
 from rabbit_monitor import Consumer
+from elasticsearch import Elasticsearch
 
 
 class Dockerengine:
@@ -150,19 +151,15 @@ class Dockerengine:
             self.client.stop(container=container_id)
 
 
-class Elasticsearch:
-    def __init__(self, hostname, port):
-        self.hostname = hostname
-        self.port = port
+def send_data_to_es(pg_ret):
+    es_url = 'http://' + param.es_address + ':' + str(param.es_ports[0])
+    es = Elasticsearch(es_url)
+    es.index(index='xtremio', doc_type='capacity', id=1, body={'foo1': 'bar1', 'foo2': 'bar2'})
+    print(pg_ret)
 
-    # Create queries and json objects to posting ElasticSearch
-    def json_builder(self):
-        pass
-
-    # HTTP post according to flag specified
-    def send_data_to_es(self, pg_ret):
-        pg_ret = ''
-        pass
+    print('-----For check')
+    res = es.search(index='xtremio', body={"query": {"match_all": {}}})
+    print(json.dumps(res, indent=4))
 
 
 def get_data_from_postgres(strmark, metric):
@@ -175,6 +172,11 @@ def get_data_from_postgres(strmark, metric):
     cur.execute(q)
     ret = cur.fetchall()
     return ret
+
+
+# Create queries and json objects to posting ElasticSearch
+def parse_to_json(ret):
+    pass
 
 
 # def build_image():
@@ -299,9 +301,11 @@ def main():
     #     print(ck)
     #     d.kill_container(ck, isremove=True)
     print('LOGGER>>> Cleaning up container done. Controller has done its task ...!!')
-    # es = Elasticsearch(hostname=param.es_address, port=param.es_ports)
+
+    # ES test
     xtremio_caps = get_data_from_postgres(strmark='xtremio', metric='capacity')
     isilon_caps = get_data_from_postgres(strmark='isilon', metric='capacity')
+    send_data_to_es(xtremio_caps)
 
 
 if __name__ == '__main__':
