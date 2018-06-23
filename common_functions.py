@@ -158,8 +158,12 @@ def convert_to_json(rbody):
 
 def get_https_response_with_json(username, password, url):
     # URL validation
-    if 'https' in url:
-        print('FOR DEBUG>>> Using HTTPS. GET from : ' + url)
+    if 'http' in url:
+        print('FOR DEBUG>>> Using HTTP/HTTPS. Checking for Secure connection or not...')
+        if 'https' in url:
+            print('FOR DEBUG>>> Using HTTPS. GET from : ' + url)
+        else:
+            print('FOR DEBUG>>> Using HTTP. GET from : ' + url)
     else:
         print('FOR DEBUG>>> URL seems to be wrong with : ' + url)
         raise Exception
