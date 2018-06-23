@@ -184,7 +184,7 @@ def main():
             uri_key_cpu = 'node.cpu.idle.avg&nodes=all'
             uri = uri_prefix + '?begin=' + str(unix_yesterday) + '&end=' + str(unix_today) + '&key=' + uri_key_cpu
             ret_cpu = get_https_response_with_json(str_username, str_password, uri)
-            # Calculate daily CPu ucalculate_averagetilization
+            # Calculate daily CPU calculate_averagetilization
             daily_cpu_util = calculate_average('cpu', ret_cpu)
             cpu_results[i] = daily_cpu_util
 
