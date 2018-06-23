@@ -99,7 +99,7 @@ def main():
     for k, v in capacity_maps.items():
         c_columns += k + ' ' + v + ','
     c_columns += ')'
-    xtremio_collector.create_table(type='capacity', columns=c_columns.replace(',)',')'))
+    xtremio_collector.create_table(metric='capacity', columns=c_columns.replace(',)',')'))
 
     clustername = xtremio_info['content']['name']
     # Get capacity information
@@ -132,7 +132,7 @@ def main():
     for k, v in sc_perf_maps.items():
         sc_perf_columns += k + ' ' + v + ','
     sc_perf_columns += ')'
-    xtremio_collector.create_table(type='sc_performance', columns=sc_perf_columns.replace(',)',')'))
+    xtremio_collector.create_table(metric='sc_performance', columns=sc_perf_columns.replace(',)',')'))
 
     # Get avg__cpu_usage by StorageController
     uri = get_xtremio_performance_uri(ip=str_ipaddress, entity='XEnv', property='avg__cpu_usage')
@@ -175,7 +175,7 @@ def main():
     for k, v in cl_perf_maps.items():
         cl_perf_columns += k + ' ' + v + ','
     cl_perf_columns += ')'
-    xtremio_collector.create_table(type='cl_performance', columns=cl_perf_columns.replace(',)',')'))
+    xtremio_collector.create_table(metric='cl_performance', columns=cl_perf_columns.replace(',)',')'))
 
     # Get performance information(IOPS, Latency, Data-eduction-ratio)
     cl_perf_results = {}

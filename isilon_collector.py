@@ -86,7 +86,7 @@ def main():
     for k, v in capacity_maps.items():
         c_columns += k + ' ' + v + ','
     c_columns += ')'
-    isilon_collector.create_table(type='capacity', columns=c_columns.replace(',)',')'))
+    isilon_collector.create_table(metric='capacity', columns=c_columns.replace(',)',')'))
 
     # Get capacity information
     c_results = {}
@@ -116,7 +116,7 @@ def main():
     for k, v in quota_maps.items():
         q_columns += k + ' ' + v + ','
     q_columns += ')'
-    isilon_collector.create_table(type='quota', columns=q_columns.replace(',)',')'))
+    isilon_collector.create_table(metric='quota', columns=q_columns.replace(',)',')'))
 
     # Get quota information
     uri = 'https://' + str_ipaddress + ':8080' + '/platform/1/quota/quotas'
@@ -167,7 +167,7 @@ def main():
     for k, v in cpu_maps.items():
         cpu_columns += k + ' ' + v + ','
     cpu_columns += ')'
-    isilon_collector.create_table(type='cpu', columns=cpu_columns.replace(',)', ')'))
+    isilon_collector.create_table(metric='cpu', columns=cpu_columns.replace(',)', ')'))
 
     # Get CPU information
     cpu_results = {}
@@ -203,7 +203,7 @@ def main():
     for k, v in bandwidth_maps.items():
         bandwidth_columns += k + ' ' + v + ','
     bandwidth_columns += ')'
-    isilon_collector.create_table(type='bandwidth', columns=bandwidth_columns.replace(',)',')'))
+    isilon_collector.create_table(metric='bandwidth', columns=bandwidth_columns.replace(',)',')'))
 
     # add to bandwidth keys and get information about bandwidth
     uri_keys_bandwidth = (
