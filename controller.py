@@ -2,6 +2,7 @@
 # http://docker-py.readthedocs.io/en/stable/api.html#module-docker.api.container
 import docker
 import json
+import time
 import params as param
 import common_functions as common
 from rabbit_monitor import Consumer
@@ -301,9 +302,10 @@ def main():
         print('LOGGER>>> All the collector completed ...!!')
 
         # --- check if ElasticSearch exists
-        if check_es_existence() == 'RUNNING':
+        es_state = check_es_existence()
+        if es_state == 'RUNNING':
             print('LOGGER>>> ElasticSearch exist. Nothing to do in this step.')
-        elif check_es_existence() == 'STOPPED':
+        elif es_state == 'STOPPED':
             print('LOGGER>>> ElasticSearch exists, but stopped. Attempting to start it...')
             d.start_container(strmark='elasticsearch')
         else:
