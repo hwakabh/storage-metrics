@@ -20,7 +20,14 @@
 - Postgres
 - RabbitMQ
 - Python
-- CentOS Linux
 
 ## Usage
-- Python programs runs by Linux cron jobs.(daily)
+- Import required packages with pip
+  - `pip install -r requirements.txt`
+- Set your environmental parameters in `params.py`
+- Run main function for collecting metrics.
+  - `python controller.py`
+  - Note that you can use `--local` option with `controller.py` if needed to print out the stdout on your machine.
+- Also, you can execute each collector's script
+  - Note that if the case you run them separately, confirm that postgres and rabbitmq is running on Docker engines.
+  - To run postgres and rabbitmq for preparation, use `dev/manualcreate_containers.sh`
