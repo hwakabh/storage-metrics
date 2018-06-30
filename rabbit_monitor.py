@@ -24,8 +24,8 @@ class Consumer:
             while queue_empty:
                 method, properties, body = channel.basic_get(queue=strmark, no_ack=True)
                 callback(channel, method, properties, body)
-
             print('LOGGER>>> Finish receiving messages from Channel ' + strmark + '.')
+            return True
 
         except Exception as e:
             print('LOGGER>>> Something wrong with RabbitMQ ...')

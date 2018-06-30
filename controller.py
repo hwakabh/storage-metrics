@@ -144,12 +144,15 @@ class Dockerengine:
 
     def kill_container(self, strmark, isremove):
         container_id = self.get_container_id(strmark)
-        if isremove:
-            print('>>> Removing ' + strmark + '(ID: ' + container_id + ') ...')
-            self.client.remove_container(container=container_id, force=True)
+        if (strmark == 'kibana') or (strmark == 'elasticsearch'):
+            pass
         else:
-            print('>>> Stopping ' + strmark + '(ID: ' + container_id + ') ...')
-            self.client.stop(container=container_id)
+            if isremove:
+                print('>>> Removing ' + strmark + '(ID: ' + container_id + ') ...')
+                self.client.remove_container(container=container_id, force=True)
+            else:
+                print('>>> Stopping ' + strmark + '(ID: ' + container_id + ') ...')
+                self.client.stop(container=container_id)
 
 
 def send_data_to_es(strmark):
@@ -316,18 +319,21 @@ def main():
         send_data_to_es(strmark='xtremio')
         send_data_to_es(strmark='isilon')
 
-    # -- print out containers for checking
-    containers = d.get_containers(isall=True)
-    print(containers)
+        # -- print out containers for checking
+        containers = d.get_containers(isall=True)
 
-    # --- finally kill and remove container Postgres and RabbitMQ
-    # # Stop container(if isremove=True, container would be destroyed)
-    # d.kill_container('clever_wing', isremove=False)
-    # # Stop and remove all containers
-    # for ck in containers.keys():
-    #     print(ck)
-    #     d.kill_container(ck, isremove=True)
-    print('LOGGER>>> Cleaning up container done. Controller has done its task ...!!')
+        print(containers)
+
+        for k, v in containers.items():
+            if ('kibana' in k) or ('elasticsearch' in k):
+                pass
+            else:
+                print('Container name: ' + k + ' / Container ID: ' + v)
+                d.kill_container(k.replace('smetrics_',''), isremove=True)
+        print('LOGGER>>> Cleaning up container done. Controller has done its task ...!!')
+
+    else:
+        print('LOGGER>>> Controller.py ended with some errorouns tasks...')
 
 
 if __name__ == '__main__':
