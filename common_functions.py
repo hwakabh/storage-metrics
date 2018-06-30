@@ -4,6 +4,7 @@ import requests
 import json
 import psycopg2
 import logging
+import datetime
 
 import params as param
 
@@ -11,6 +12,26 @@ import params as param
 import urllib3
 from urllib3.exceptions import InsecureRequestWarning
 urllib3.disable_warnings(InsecureRequestWarning)
+
+
+def get_logger(strmark):
+    logfilename = './logs/' + datetime.datetime.now().strftime('%Y%m%d_' + strmark) + ".log"
+    # logging.basicConfig()
+    _detail_formatting = '%(asctime)s : %(name)s - %(levelname)s : %(message)s'
+    logging.basicConfig(level=logging.DEBUG, format=_detail_formatting, filename=logfilename)
+    logging.getLogger('modules').setLevel(level=logging.DEBUG)
+
+    console = logging.StreamHandler()
+    console_formatter = logging.Formatter('%(asctime)s : %(message)s')
+    console.setFormatter(console_formatter)
+    console.setLevel(logging.INFO)
+    logging.getLogger('modules').addHandler(console)
+
+    logger = logging.getLogger(__name__)
+    logging.getLogger(__name__).addHandler(console)
+
+    return logger
+
 
 logger = logging.getLogger(__name__)
 
@@ -154,7 +175,7 @@ def convert_to_json(rbody):
     try:
         js = json.loads(rbody)
     except Exception as e:
-        logger.error('FOR_DEBUG>>> Some Error occurred when converting from String to JSON.')
+        logger.error('>>> Some Error occurred when converting from String to JSON.')
         logger.error('Errors : ', e.args)
     return js
 
@@ -162,13 +183,13 @@ def convert_to_json(rbody):
 def get_https_response_with_json(username, password, url):
     # URL validation
     if 'http' in url:
-        logger.info('FOR DEBUG>>> Using HTTP/HTTPS. Checking for Secure connection or not...')
+        logger.info('>>> Using HTTP/HTTPS. Checking for Secure connection or not...')
         if 'https' in url:
-            logger.info('FOR DEBUG>>> Using HTTPS. GET from : ' + url)
+            logger.info('>>> Using HTTPS. GET from : ' + url)
         else:
-            logger.info('FOR DEBUG>>> Using HTTP. GET from : ' + url)
+            logger.info('>>> Using HTTP. GET from : ' + url)
     else:
-        logger.error('FOR DEBUG>>> URL seems to be wrong with : ' + url)
+        logger.error('>>> URL seems to be wrong with : ' + url)
         raise Exception
 
     rbody = ''
@@ -176,10 +197,12 @@ def get_https_response_with_json(username, password, url):
     try:
         # verify=False for ignore SSL Certificate
         r = requests.get(url, auth=(username, password), verify=False)
-        logger.info('FOR_DEBUG>>> Return code fine, seems that Successfully GET content.')
+        logger.info('>>> Return code fine, seems that Successfully GET content.')
         rbody = r.text
     except Exception as e:
-        logger.error('FOR_DEBUG>>> Some Error occurred when getting HTTP/HTTPS response.')
+        logger.error('>>> Some Error occurred when getting HTTP/HTTPS response.')
         logger.error('Errors : ', e.args)
 
     return convert_to_json(rbody)
+
+

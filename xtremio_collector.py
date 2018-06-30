@@ -1,24 +1,11 @@
 import datetime
-import logging
-
+from common_functions import get_logger
 from common_functions import Collector
 from common_functions import get_https_response_with_json
 import params as param
 
-logfilename = './logs/' + datetime.datetime.now().strftime('%Y%m%d_xtremio_collector') + ".log"
-# logging.basicConfig()
-_detail_formatting = '%(asctime)s : %(name)s - %(levelname)s : %(message)s'
-logging.basicConfig(level=logging.DEBUG, format=_detail_formatting, filename=logfilename)
-logging.getLogger('modules').setLevel(level=logging.DEBUG)
-
-console = logging.StreamHandler()
-console_formatter = logging.Formatter('%(asctime)s : %(message)s')
-console.setFormatter(console_formatter)
-console.setLevel(logging.INFO)
-logging.getLogger('modules').addHandler(console)
-
-logger = logging.getLogger(__name__)
-logging.getLogger(__name__).addHandler(console)
+logger = get_logger('XtremIO')
+strmark = 'XTREMIO'
 
 
 def get_xtremio_information(ip, user, passwd):
@@ -27,7 +14,7 @@ def get_xtremio_information(ip, user, passwd):
         # Execute HTTPS GET
         ret = get_https_response_with_json(user, passwd, api)
     except Exception:
-        logger.info('XtremIO_Collector>>> Exception is throwed by common function. '
+        logger.info(strmark + '_Collector>>> Exception is throwed by common function. '
               'Error when getting information from XtremIO ...')
     else:
         # Currently only considering single cluster
@@ -85,7 +72,7 @@ def calculate_cluster_performances(json):
 
 
 def main():
-    logger.info('XtremIO_Collector>>> Xtrem Collector boots up...!!')
+    logger.info(strmark + '_Collector>>> Xtrem Collector boots up...!!')
 
     # Setting parameters for target Isilon
     str_ipaddress = param.xtremio_address
@@ -93,8 +80,8 @@ def main():
     str_password = param.xtremio_pass
 
     # Getting General isilon Information
-    logger.info('XtremIO_Collector>>> Target XtremIO(XMS) : ' + str_ipaddress)
-    logger.info('XtremIO_Collector>>> General Information : ')
+    logger.info(strmark + '_Collector>>> Target XtremIO(XMS) : ' + str_ipaddress)
+    logger.info(strmark + '_Collector>>> General Information : ')
     xtremio_info = get_xtremio_information(str_ipaddress, str_username, str_password)
 
     # Instantiate Collector Class with constructor
@@ -175,7 +162,7 @@ def main():
                 value_list.append(v)
                 sc_perf_results[i] = value_list
         else:
-            logger.error('XtremIO_Collector>>> Some Errors...')
+            logger.error(strmark + '_Collector>>> Some Errors...')
 
     # Insert avg__cpu usage to postgres
     xtremio_collector.send_data_to_postgres(data=sc_perf_results, data_type='sc_performance')
@@ -215,7 +202,7 @@ def main():
     # Send message to rabbitmq
     xtremio_collector.send_message('END')
 
-    logger.info('XtremIO_Collector>>> XtremIO Collector has done its task...!!')
+    logger.info(strmark + '_Collector>>> XtremIO Collector has done its task...!!')
 
 
 if __name__ == '__main__':

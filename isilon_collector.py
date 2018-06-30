@@ -1,24 +1,14 @@
 import datetime
 import logging
 
+from common_functions import get_logger
 from common_functions import Collector
 from common_functions import get_https_response_with_json
 import params as param
 
-logfilename = './logs/' + datetime.datetime.now().strftime('%Y%m%d_isilon_collector') + ".log"
-# logging.basicConfig()
-_detail_formatting = '%(asctime)s : %(name)s - %(levelname)s : %(message)s'
-logging.basicConfig(level=logging.DEBUG, format=_detail_formatting, filename=logfilename)
-logging.getLogger('modules').setLevel(level=logging.DEBUG)
 
-console = logging.StreamHandler()
-console_formatter = logging.Formatter('%(asctime)s : %(message)s')
-console.setFormatter(console_formatter)
-console.setLevel(logging.INFO)
-logging.getLogger('modules').addHandler(console)
-
-logger = logging.getLogger(__name__)
-logging.getLogger(__name__).addHandler(console)
+logger = get_logger('Isilon')
+strmark = 'ISILON'
 
 
 def get_isilon_information(ip, user, passwd):
@@ -37,7 +27,7 @@ def get_isilon_information(ip, user, passwd):
         # Return result
         return ret
     except Exception:
-        logger.error('Isilon_Collector>>> Exception is throwed by common function. '
+        logger.error(strmark + '_Collector>>> Exception is throwed by common function. '
               'Error when getting information from Isilon ...')
 
 
@@ -50,10 +40,10 @@ def calculate_average(t, json):
                 e = v['value'] / 10
                 sum = sum + e
             cpu_average_byid = 100 - (sum / len(json['stats'][i]['values']))
-            logger.info('Isilon_Collector>>> CPU Average Util on DeviceID-' + str(json['stats'][i]['devid']) + ' : ' + str(cpu_average_byid))
+            logger.info(strmark + '_Collector>>> CPU Average Util on DeviceID-' + str(json['stats'][i]['devid']) + ' : ' + str(cpu_average_byid))
             avg_sum = avg_sum + cpu_average_byid
         cpu_average = avg_sum / len(json['stats'])
-        logger.info('Isilon_Collector>>> Average CPU Utilization : ' + str(cpu_average))
+        logger.info(strmark + '_Collector>>> Average CPU Utilization : ' + str(cpu_average))
         return cpu_average
     elif t == 'bandwidth':
         for i in range(len(json['stats'])):
@@ -61,17 +51,17 @@ def calculate_average(t, json):
             for v in json['stats'][i]['values']:
                 sum = sum + v['value']
             bandwidth_average_byid = sum / len(json['stats'][i]['values'])
-            # logger.info('Isilon_Collector>>> Average bandwidth Util on DeviceID-' + str(json['stats'][i]['devid']) + ' : ' + str(bandwidth_average_byid))
+            # logger.info(strmark + '_Collector>>> Average bandwidth Util on DeviceID-' + str(json['stats'][i]['devid']) + ' : ' + str(bandwidth_average_byid))
             avg_sum = avg_sum + bandwidth_average_byid
         bandwidth_average = avg_sum / len(json['stats'])
-        logger.info('Isilon_Collector>>> Bandwidth average Utilization : ' + str(bandwidth_average))
+        logger.info(strmark + '_Collector>>> Bandwidth average Utilization : ' + str(bandwidth_average))
         return bandwidth_average
     else:
         logger.error('Specified flag is wrong...')
 
 
 def main():
-    logger.info('Isilon_Collector>>> Isilon Collector boots up...!!')
+    logger.info(strmark + '_Collector>>> Isilon Collector boots up...!!')
 
     # Setting parameters for target Isilon
     str_ipaddress = param.isilon_address
@@ -79,8 +69,8 @@ def main():
     str_password = param.isilon_pass
 
     # Getting General isilon Information
-    logger.info('Isilon_Collector>>> Target Isilon : ' + str_ipaddress)
-    logger.info('Isilon_Collector>>> General Information : ')
+    logger.info(strmark + '_Collector>>> Target Isilon : ' + str_ipaddress)
+    logger.info(strmark + '_Collector>>> General Information : ')
     isilon_info = get_isilon_information(str_ipaddress, str_username, str_password)
 
     # Instantiate Collector Class with constructor
@@ -166,7 +156,7 @@ def main():
                 value_list.append(v['usage']['physical'])
                 q_results[i] = value_list
         else:
-            logger.error('Isilon_Collector>>> Some Errors...')
+            logger.error(strmark + '_Collector>>> Some Errors...')
 
     # Insert capacity information to postgres
     isilon_collector.send_data_to_postgres(data=q_results, data_type='quota')
@@ -251,7 +241,7 @@ def main():
     # Send message to rabbitmq
     isilon_collector.send_message('END')
 
-    logger.info('Isilon_Collector>>> Isilon Collector has done its task...!!')
+    logger.info(strmark + '_Collector>>> Isilon Collector has done its task...!!')
 
 
 if __name__ == '__main__':

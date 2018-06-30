@@ -19,20 +19,20 @@ class Consumer:
             queue_state = channel.queue_declare(queue=strmark, durable=True, passive=True)
             queue_empty = queue_state.method.message_count == 0
 
-            logger.info('FOR_DEBUG>>> Waiting for messages from Channel ' + strmark + '.')
+            logger.info('>>> Waiting for messages from Channel ' + strmark + '.')
 
             def callback(ch, method, properties, body):
-                logger.info('FOR_DEBUG>>> Received %s ' % (body, ))
+                logger.info('>>> Received %s ' % (body, ))
 
             while queue_empty:
                 method, properties, body = channel.basic_get(queue=strmark, no_ack=True)
                 callback(channel, method, properties, body)
 
-            logger.info('FOR_DEBUG>>> Finish receiving messages from Channel ' + strmark + '.')
+            logger.info('>>> Finish receiving messages from Channel ' + strmark + '.')
             connection.close()
             return True
 
         except Exception as e:
-            logger.error('FOR_DEBUG>>> Something wrong with RabbitMQ ...')
+            logger.error('>>> Something wrong with RabbitMQ ...')
             logger.error('Errors : ', e.args)
 
