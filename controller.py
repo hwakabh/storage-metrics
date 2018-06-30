@@ -4,6 +4,8 @@ import docker
 import time
 import datetime
 import logging
+import subprocess
+import sys
 
 import params as param
 import common_functions as common
@@ -267,7 +269,28 @@ def start_message_monitor():
         return False
 
 
+def print_usage():
+    print("printing usage...")
+
+
 def main():
+    argvs = sys.argv
+    exec_flag = ''
+
+    if len(argvs) == 2:
+        # case if local mode
+        if argvs[1] == '--local':
+            exec_flag = 'LOCAL'
+            logger.info('----- Collector.py would execute in local debug mode. -----')
+        # case if wrong option specified
+        else:
+            print_usage()
+            sys.exit(1)
+    # case if normal mode
+    else:
+        logger.info('----- Collector.py would execute for remote collector container.-----')
+        pass
+
     # --- starting controller
     logger.info('FOR_DEBUG>>> Controller started by \'python controller.py\'')
 
@@ -301,7 +324,10 @@ def main():
     # --- start xtremio_collector(data collected would be inserted to postgres by each collector)
     if d.check_launch_image(strmark=param.xtremio_imgname):
         logger.info('FOR_DEBUG>>> Launching XtremIO-Collector container...')
-        d.launch_container(strmark='xtremio')
+        if exec_flag == 'LOCAL':
+            subprocess.call(['python', r'.\xtremio_collector.py'], shell=True)
+        else:
+            d.launch_container(strmark='xtremio')
     else:
         # Case if there's no image for smetric/xtremiocollector, start to build image and launch container
         pass
@@ -309,7 +335,10 @@ def main():
     # --- start isilon_collector(data collected would be inserted to postgres by each collector)
     if d.check_launch_image(strmark=param.isilon_imgname):
         logger.info('FOR_DEBUG>>> Launching Isilon-Collector container...')
-        d.launch_container(strmark='isilon')
+        if exec_flag == 'LOCAL':
+            subprocess.call(['python', r'.\isilon_collector.py'], shell=True)
+        else:
+            d.launch_container(strmark='isilon')
     else:
         # Case if there's no image for smetric/isiloncollector, start to build image and launch container
         pass
