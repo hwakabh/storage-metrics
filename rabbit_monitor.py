@@ -13,20 +13,17 @@ class Consumer:
         try:
             channel = connection.channel()
             # create channel to send message
-            channel.queue_declare(queue=strmark)
+            queue_state = channel.queue_declare(queue=strmark, durable=True, passive=True)
+            queue_empty = queue_state.method.message_count == 0
 
             print('FOR_DEBUG>>> Waiting for messages from Channel ' + strmark + '.')
 
             def callback(ch, method, properties, body):
                 print('FOR_DEBUG>>> Received %s ' % (body, ))
 
-            channel.basic_consume(callback, queue=strmark, no_ack=True)
-            try:
-                channel.start_consuming()
-            except KeyboardInterrupt:
-                channel.stop_consuming()
-                return True
-            connection.close()
+            while queue_empty:
+                method, properties, body = channel.basic_get(queue=strmark, no_ack=True)
+                callback(channel, method, properties, body)
 
             print('LOGGER>>> Finish receiving messages from Channel ' + strmark + '.')
 

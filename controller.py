@@ -175,7 +175,7 @@ def send_data_to_es(strmark):
 
     print('LOGGER>>> Data sent to ElasticSearch.')
     res = es.search(index=strmark, body={"query": {"match_all": {}}})
-    print(json.dumps(res))
+    # print(json.dumps(res))
 
 
 def get_data_from_postgres(strmark, metric):
