@@ -4,11 +4,18 @@ import docker
 import time
 import subprocess
 import sys
+import os
 
 import params as param
 import common_functions as common
 from rabbit_monitor import Consumer
 from elasticsearch import Elasticsearch
+
+# --- pre-check of logging directory
+if os.path.exists('./logs'):
+    pass
+else:
+    os.mkdir('./logs')
 
 logger = common.get_logger('Controller')
 

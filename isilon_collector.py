@@ -1,5 +1,4 @@
 import datetime
-import logging
 
 from common_functions import get_logger
 from common_functions import Collector
