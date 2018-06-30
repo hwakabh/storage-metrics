@@ -13,7 +13,7 @@ from rabbit_monitor import Consumer
 from elasticsearch import Elasticsearch
 
 
-logfilename = './logs/' + datetime.datetime.now().strftime('%Y%m%d_Collector') + ".log"
+logfilename = './logs/' + datetime.datetime.now().strftime('%Y%m%d_Controller') + ".log"
 # logging.basicConfig()
 _detail_formatting = '%(asctime)s : %(name)s - %(levelname)s : %(message)s'
 logging.basicConfig(level=logging.DEBUG, format=_detail_formatting, filename=logfilename, )
