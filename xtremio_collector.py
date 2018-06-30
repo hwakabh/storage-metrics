@@ -52,7 +52,7 @@ def calculate_xenv_cpu_utilization(json, sc_count):
     for c in range(int(sc_count)):
         utils = [util[4] for util in json['counters'] if util[3] == (c+1)]
         average_xenv_cpu_util = sum(utils) / len(utils)
-        print('Average xenv_cpu_util of ' + uniq_sc[c] + ' = ' + str(average_xenv_cpu_util) )
+        # print('Average xenv_cpu_util of ' + uniq_sc[c] + ' = ' + str(average_xenv_cpu_util) )
         sc_map[str(uniq_sc[c])] = average_xenv_cpu_util
 
     return sc_map
@@ -68,7 +68,7 @@ def calculate_cluster_performances(json):
 
 
 def main():
-    print('XTREMIO_LOGGER>>> Isilon Collector boots up...!!')
+    print('XTREMIO_LOGGER>>> Xtrem Collector boots up...!!')
 
     # Setting parameters for target Isilon
     str_ipaddress = param.xtremio_address
