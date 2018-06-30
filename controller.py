@@ -16,7 +16,7 @@ from elasticsearch import Elasticsearch
 logfilename = './logs/' + datetime.datetime.now().strftime('%Y%m%d_Controller') + ".log"
 # logging.basicConfig()
 _detail_formatting = '%(asctime)s : %(name)s - %(levelname)s : %(message)s'
-logging.basicConfig(level=logging.DEBUG, format=_detail_formatting, filename=logfilename, )
+logging.basicConfig(level=logging.DEBUG, format=_detail_formatting, filename=logfilename)
 logging.getLogger('modules').setLevel(level=logging.DEBUG)
 
 console = logging.StreamHandler()

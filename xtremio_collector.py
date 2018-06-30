@@ -8,7 +8,7 @@ import params as param
 logfilename = './logs/' + datetime.datetime.now().strftime('%Y%m%d_xtremio_collector') + ".log"
 # logging.basicConfig()
 _detail_formatting = '%(asctime)s : %(name)s - %(levelname)s : %(message)s'
-logging.basicConfig(level=logging.DEBUG, format=_detail_formatting, filename=logfilename, )
+logging.basicConfig(level=logging.DEBUG, format=_detail_formatting, filename=logfilename)
 logging.getLogger('modules').setLevel(level=logging.DEBUG)
 
 console = logging.StreamHandler()
@@ -19,7 +19,6 @@ logging.getLogger('modules').addHandler(console)
 
 logger = logging.getLogger(__name__)
 logging.getLogger(__name__).addHandler(console)
-
 
 
 def get_xtremio_information(ip, user, passwd):
