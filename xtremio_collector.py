@@ -1,7 +1,11 @@
+import datetime
+import logging
+
 from common_functions import Collector
 from common_functions import get_https_response_with_json
 import params as param
-import datetime
+
+logger = logging.getLogger(__name__)
 
 
 def get_xtremio_information(ip, user, passwd):
@@ -10,22 +14,22 @@ def get_xtremio_information(ip, user, passwd):
         # Execute HTTPS GET
         ret = get_https_response_with_json(user, passwd, api)
     except Exception:
-        print('XTREMIO_LOGGER>>> Exception is throwed by common function. '
+        logger.info('XtremIO_Collector>>> Exception is throwed by common function. '
               'Error when getting information from XtremIO ...')
     else:
         # Currently only considering single cluster
         clustername = ret['clusters'][0]['name']
-        print('ClusterName : ' + clustername)
+        logger.info('ClusterName : ' + clustername)
 
         api = 'https://' + ip + '/api/json/v2/types/clusters?name=' + clustername
         ret = get_https_response_with_json(user, passwd, api)
         # Printing for debug
-        print('S/N : ' + ret['content']['sys-psnt-serial-number'])
-        print('XtremApp Software Version : ' + ret['content']['sys-sw-version'])
-        print('StorageController Count(xenv count) : ' + str(ret['content']['num-of-xenvs']))
-        print('Brick information : ')
+        logger.info('S/N : ' + ret['content']['sys-psnt-serial-number'])
+        logger.info('XtremApp Software Version : ' + ret['content']['sys-sw-version'])
+        logger.info('StorageController Count(xenv count) : ' + str(ret['content']['num-of-xenvs']))
+        logger.info('Brick information : ')
         for b in ret['content']['brick-list']:
-            print('Brick Name : ' + b[1] + ' <<BrickNo : ' + str(b[0]) + ', BrickId : ' + str(b[2]) + '>>')
+            logger.info('Brick Name : ' + b[1] + ' <<BrickNo : ' + str(b[0]) + ', BrickId : ' + str(b[2]) + '>>')
     # Return results
         return ret
 
@@ -68,7 +72,7 @@ def calculate_cluster_performances(json):
 
 
 def main():
-    print('XTREMIO_LOGGER>>> Xtrem Collector boots up...!!')
+    logger.info('XtremIO_Collector>>> Xtrem Collector boots up...!!')
 
     # Setting parameters for target Isilon
     str_ipaddress = param.xtremio_address
@@ -76,8 +80,8 @@ def main():
     str_password = param.xtremio_pass
 
     # Getting General isilon Information
-    print('XTREMIO_LOGGER>>> Target XtremIO(XMS) : ' + str_ipaddress)
-    print('XTREMIO_LOGGER>>> General Information : ')
+    logger.info('XtremIO_Collector>>> Target XtremIO(XMS) : ' + str_ipaddress)
+    logger.info('XtremIO_Collector>>> General Information : ')
     xtremio_info = get_xtremio_information(str_ipaddress, str_username, str_password)
 
     # Instantiate Collector Class with constructor
@@ -158,7 +162,7 @@ def main():
                 value_list.append(v)
                 sc_perf_results[i] = value_list
         else:
-            print('XTREMIO_LOGGER>>> Some Errors...')
+            logger.error('XtremIO_Collector>>> Some Errors...')
 
     # Insert avg__cpu usage to postgres
     xtremio_collector.send_data_to_postgres(data=sc_perf_results, data_type='sc_performance')
@@ -198,7 +202,7 @@ def main():
     # Send message to rabbitmq
     xtremio_collector.send_message('END')
 
-    print('XTREMIO_LOGGER>>> XtremIO Collector has done its task...!!')
+    logger.info('XtremIO_Collector>>> XtremIO Collector has done its task...!!')
 
 
 if __name__ == '__main__':

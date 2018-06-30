@@ -12,16 +12,18 @@ import common_functions as common
 from rabbit_monitor import Consumer
 from elasticsearch import Elasticsearch
 
-logfilename = "./logs/" + datetime.datetime.now().strftime("%Y%m%d_controller") + ".log"
+
+logfilename = './logs/' + datetime.datetime.now().strftime('%Y%m%d_Collector') + ".log"
 # logging.basicConfig()
-_detail_formatting = "%(asctime)s : %(name)s - %(levelname)s : %(message)s"
-logging.basicConfig(level=logging.DEBUG, format=_detail_formatting, filename=logfilename,)
-logging.getLogger("modules").setLevel(level=logging.DEBUG)
+_detail_formatting = '%(asctime)s : %(name)s - %(levelname)s : %(message)s'
+logging.basicConfig(level=logging.DEBUG, format=_detail_formatting, filename=logfilename, )
+logging.getLogger('modules').setLevel(level=logging.DEBUG)
+
 console = logging.StreamHandler()
-console_formatter = logging.Formatter("%(asctime)s : %(message)s")
+console_formatter = logging.Formatter('%(asctime)s : %(message)s')
 console.setFormatter(console_formatter)
 console.setLevel(logging.INFO)
-logging.getLogger("modules").addHandler(console)
+logging.getLogger('modules').addHandler(console)
 
 logger = logging.getLogger(__name__)
 logging.getLogger(__name__).addHandler(console)

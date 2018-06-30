@@ -4,6 +4,7 @@ import requests
 import json
 import psycopg2
 import logging
+
 import params as param
 
 # To hide InsecureRequesetWarning in prompt
