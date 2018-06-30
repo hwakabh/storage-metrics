@@ -176,7 +176,7 @@ def send_data_to_es(strmark):
         else:
             es.index(index=strmark, doc_type=m, body=body)
 
-    print('LOGGER>>> Data sent to ElasticSearch.')
+    print('LOGGER>>> Data collected by ' + strmark + '_collector sent to ElasticSearch.')
     res = es.search(index=strmark, body={"query": {"match_all": {}}})
     # print(json.dumps(res))
 
@@ -300,11 +300,22 @@ def main():
         pass
 
     # --- wait for collectors complete(Check if 2 messages in each channel)
-    is_complete = start_message_monitor()
+    print('LOGGER>>> Message monitor started. Wait for startup consuming process for 5 seconds...')
+    time.sleep(5)
+
+    is_complete = False
+    while not is_complete:
+        try:
+            is_complete = start_message_monitor()
+        except Exception as e:
+            print('LOGGER>>> Some error occured when consuming messages...')
+            time.sleep(2)
+
     if is_complete:
         print('LOGGER>>> All the collector completed ...!!')
 
         # --- check if ElasticSearch exists
+        print('LOGGER>>> Prechecking for inserting data to ElasticSearch container...')
         es_state = check_es_existence()
         if es_state == 'RUNNING':
             print('LOGGER>>> ElasticSearch exist. Nothing to do in this step.')
