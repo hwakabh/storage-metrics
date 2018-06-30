@@ -1,12 +1,28 @@
 # to manage remote docker host, use APIClient class in docker-py, not docker.from_env()
 # http://docker-py.readthedocs.io/en/stable/api.html#module-docker.api.container
 import docker
-import json
 import time
+import datetime
+import logging
+
 import params as param
 import common_functions as common
 from rabbit_monitor import Consumer
 from elasticsearch import Elasticsearch
+
+logfilename = "./logs/" + datetime.datetime.now().strftime("%Y%m%d_controller") + ".log"
+# logging.basicConfig()
+_detail_formatting = "%(asctime)s : %(name)s - %(levelname)s : %(message)s"
+logging.basicConfig(level=logging.DEBUG, format=_detail_formatting, filename=logfilename,)
+logging.getLogger("modules").setLevel(level=logging.DEBUG)
+console = logging.StreamHandler()
+console_formatter = logging.Formatter("%(asctime)s : %(message)s")
+console.setFormatter(console_formatter)
+console.setLevel(logging.INFO)
+logging.getLogger("modules").addHandler(console)
+
+logger = logging.getLogger(__name__)
+logging.getLogger(__name__).addHandler(console)
 
 
 class Dockerengine:
@@ -36,17 +52,17 @@ class Dockerengine:
         if cname in containers:
             return containers.get(cname)
         else:
-            print('FOR_DEBUG>>> Container seems to be not existed ...')
+            logger.warning('FOR_DEBUG>>> Container seems to be not existed ...')
             return None
 
     # Check if image of launching container exists or not.
     def check_launch_image(self, strmark):
         img = self.client.images(name=strmark)
         if img:
-            print('FOR_DEBUG>>> Image for ' + strmark + ' exist. Launching ' + strmark + ' containers...')
+            logger.info('FOR_DEBUG>>> Image for ' + strmark + ' exist. Launching ' + strmark + ' containers...')
             return True
         else:
-            print('FOR_DEBUG>>> There is no image for ' + strmark + '. ' + strmark + ' container failed to launch...')
+            logger.info('FOR_DEBUG>>> There is no image for ' + strmark + '. ' + strmark + ' container failed to launch...')
             return False
 
     def start_container(self, strmark):
@@ -61,20 +77,20 @@ class Dockerengine:
         elif strmark == 'isilon':
             image_name = param.isilon_imgname + ':latest'
         else:
-            print('LOGGER>>> Specified storage does not exist.')
+            logger.error('FOR_DEBUG>>> Specified storage does not exist.')
 
-        print('LOGGER>>> Launching storage containers...')
+        logger.info('FOR_DEBUG>>> Launching storage containers...')
         c = None
         if (strmark == 'xtremio') or (strmark == 'isilon'):
             cmd = '/usr/local/bin/python ' + strmark + '_collector.py'
-            print('LOGGER>>> Try executing ' + cmd + ' on container...')
+            logger.info('FOR_DEBUG>>> Try executing ' + cmd + ' on container...')
             try:
                 c = self.client.create_container(image=image_name, detach=True, name=cname,
                                                  command=cmd)
-                print('LOGGER>>> ' + strmark + ' container successfully created.')
+                logger.info('FOR_DEBUG>>> ' + strmark + ' container successfully created.')
             except Exception as e:
-                print('LOGGER>>> Error when creating container of collector for ' + strmark + '...')
-                print('Errors : ', e.args)
+                logger.error('FOR_DEBUG>>> Error when creating container of collector for ' + strmark + '...')
+                logger.error('Errors : ', e.args)
         else:
             pass
         return c
@@ -85,16 +101,16 @@ class Dockerengine:
         # Checking for avoiding name conflict
         containers = self.get_containers(isall=False)
         if cname in containers:
-            print('LOGGER>>> Could not start container '
+            logger.info('FOR_DEBUG>>> Could not start container '
                   'because ' + strmark + ' container is already running with same name as ' + cname)
-            print('LOGGER>>> Stop and Force-removing container ' + cname)
+            logger.info('FOR_DEBUG>>> Stop and Force-removing container ' + cname)
             self.kill_container(strmark=strmark, isremove=True)
         else:
             containers = self.get_containers(isall=True)
             if cname in containers:
-                print('LOGGER>>> Could not start container '
+                logger.info('FOR_DEBUG>>> Could not start container '
                       'because ' + strmark + ' container was not removed with same name as ' + cname)
-                print('LOGGER>>> Removing remaining container ' + cname)
+                logger.info('FOR_DEBUG>>> Removing remaining container ' + cname)
                 self.kill_container(strmark=strmark, isremove=True)
 
         # Set parameters for launching container(case if no name conflict)
@@ -118,29 +134,29 @@ class Dockerengine:
             pass
 
         # Start launching container(case if creating common containers)
-        print('LOGGER>>> Creating ' + strmark + ' container and starting it ...')
+        logger.info('FOR_DEBUG>>> Creating ' + strmark + ' container and starting it ...')
         c = None
         if (strmark == 'postgres') or (strmark == 'rabbitmq') or (strmark == 'elasticsearch'):
             try:
                 c = self.client.create_container(image=image_name, detach=True, name=cname,
                                                  ports=hostports, host_config=hostconfig)
-                print('LOGGER>>> ' + strmark + ' container successfully created.')
+                logger.info('FOR_DEBUG>>> ' + strmark + ' container successfully created.')
             except Exception as e:
-                print('LOGGER>>> Error when creating ' + strmark + ' containers...')
-                print('Errors : ', e.args)
+                logger.error('LOGGER>>> Error when creating ' + strmark + ' containers...')
+                logger.error('Errors : ', e.args)
         # case if creating storage collector containers
         elif (strmark == 'xtremio') or (strmark == 'isilon'):
             c = self.launch_storage_container(strmark=strmark)
         else:
-            print('FOR_DEBUG>>> Specified strmark seems to be wrong, check your parameters.')
+            logger.error('FOR_DEBUG>>> Specified strmark seems to be wrong, check your parameters.')
 
         # Starting containers
         try:
             self.client.start(c)
-            print('LOGGER>>> ' + strmark + ' container started.')
+            logger.info('FOR_DEBUG>>> ' + strmark + ' container started.')
         except Exception as e:
-            print('LOGGER>>> Error when starting ' + strmark + ' containers...')
-            print('Errors : ', e.args)
+            logger.error('FOR_DEBUG>>> Error when starting ' + strmark + ' containers...')
+            logger.error('Errors : ', e.args)
 
     def kill_container(self, strmark, isremove):
         container_id = self.get_container_id(strmark)
@@ -148,10 +164,10 @@ class Dockerengine:
             pass
         else:
             if isremove:
-                print('>>> Removing ' + strmark + '(ID: ' + container_id + ') ...')
+                logger.info('>>> Removing ' + strmark + '(ID: ' + container_id + ') ...')
                 self.client.remove_container(container=container_id, force=True)
             else:
-                print('>>> Stopping ' + strmark + '(ID: ' + container_id + ') ...')
+                logger.info('>>> Stopping ' + strmark + '(ID: ' + container_id + ') ...')
                 self.client.stop(container=container_id)
 
 
@@ -166,7 +182,7 @@ def send_data_to_es(strmark):
     elif strmark == 'isilon':
         metrics = ['capacity', 'quota', 'cpu', 'bandwidth']
     else:
-        print('LOGGER>>> Please check strmark')
+        logger.error('FOR_DEBUG>>> Please check strmark')
 
     for m in metrics:
         body = get_data_from_postgres(strmark=strmark, metric=m)
@@ -176,9 +192,8 @@ def send_data_to_es(strmark):
         else:
             es.index(index=strmark, doc_type=m, body=body)
 
-    print('LOGGER>>> Data collected by ' + strmark + '_collector sent to ElasticSearch.')
+    logger.info('FOR_DEBUG>>> Data collected by ' + strmark + '_collector sent to ElasticSearch.')
     res = es.search(index=strmark, body={"query": {"match_all": {}}})
-    # print(json.dumps(res))
 
 
 def get_data_from_postgres(strmark, metric):
@@ -226,7 +241,7 @@ def parse_to_json(header, data):
 def check_es_existence():
     d = Dockerengine()
     es_cname = 'smetrics_elasticsearch'
-    print('LOGGER>>> Checking if ElasticSearch exists or not ...')
+    logger.info('FOR_DEBUG>>> Checking if ElasticSearch exists or not ...')
     running_containers = d.get_containers(isall=False)
     all_containers = d.get_containers(isall=True)
 
@@ -254,18 +269,18 @@ def start_message_monitor():
 
 def main():
     # --- starting controller
-    print('LOGGER>>> Controller started by \'python controller.py\'')
+    logger.info('FOR_DEBUG>>> Controller started by \'python controller.py\'')
 
     # --- Instantiate docker class
     d = None
     try:
         d = Dockerengine()
     except Exception as e:
-        print('LOGGER>>> Error when instantiate docker class.')
-        print('Errors : ', e.args)
+        logger.error('FOR_DEBUG>>> Error when instantiate docker class.')
+        logger.error('Errors : ', e.args)
 
     # --- start postgres
-    print('LOGGER>>> Launching postgres container...')
+    logger.info('FOR_DEBUG>>> Launching postgres container...')
     if d.check_launch_image(strmark='postgres'):
         d.launch_container(strmark='postgres')
     else:
@@ -273,19 +288,19 @@ def main():
         pass
 
     # --- start rabbitmq
-    print('LOGGER>>> Launching RabbitMQ container...')
+    logger.info('FOR_DEBUG>>> Launching RabbitMQ container...')
     if d.check_launch_image(strmark='rabbitmq'):
         d.launch_container(strmark='rabbitmq')
     else:
         # Case if there's no image for rabbitmq
         pass
 
-    print('LOGGER>>> Waiting for waking up RabbitMQ container for 5 Seconds ....')
+    logger.info('FOR_DEBUG>>> Waiting for waking up RabbitMQ container for 5 Seconds ....')
     time.sleep(5)
 
     # --- start xtremio_collector(data collected would be inserted to postgres by each collector)
     if d.check_launch_image(strmark=param.xtremio_imgname):
-        print('LOGGER>>> Launching XtremIO-Collector container...')
+        logger.info('FOR_DEBUG>>> Launching XtremIO-Collector container...')
         d.launch_container(strmark='xtremio')
     else:
         # Case if there's no image for smetric/xtremiocollector, start to build image and launch container
@@ -293,58 +308,66 @@ def main():
 
     # --- start isilon_collector(data collected would be inserted to postgres by each collector)
     if d.check_launch_image(strmark=param.isilon_imgname):
-        print('LOGGER>>> Launching Isilon-Collector container...')
+        logger.info('FOR_DEBUG>>> Launching Isilon-Collector container...')
         d.launch_container(strmark='isilon')
     else:
         # Case if there's no image for smetric/isiloncollector, start to build image and launch container
         pass
 
     # --- wait for collectors complete(Check if 2 messages in each channel)
-    print('LOGGER>>> Message monitor started. Wait for startup consuming process for 5 seconds...')
+    logger.info('FOR_DEBUG>>> Message monitor started. Wait for startup consuming process for 5 seconds...')
     time.sleep(5)
 
     is_complete = False
+    rc = 0
+
     while not is_complete:
+        rc += 1
         try:
             is_complete = start_message_monitor()
-        except Exception as e:
-            print('LOGGER>>> Some error occured when consuming messages...')
+        except Exception:
+            logger.info('FOR_DEBUG>>> Some error occured when consuming messages, attempt to retry...')
             time.sleep(2)
+        finally:
+            if rc >= param.mq_rc:
+                logger.error('FOR_DEBUG>>> Controller.py retried 10 times to consume message, aborted.')
+                break
+            else:
+                pass
 
     if is_complete:
-        print('LOGGER>>> All the collector completed ...!!')
+        logger.info('FOR_DEBUG>>> All the collector completed ...!!')
 
         # --- check if ElasticSearch exists
-        print('LOGGER>>> Prechecking for inserting data to ElasticSearch container...')
+        logger.info('FOR_DEBUG>>> Prechecking for inserting data to ElasticSearch container...')
         es_state = check_es_existence()
         if es_state == 'RUNNING':
-            print('LOGGER>>> ElasticSearch exist. Nothing to do in this step.')
+            logger.info('FOR_DEBUG>>> ElasticSearch exist. Nothing to do in this step.')
         elif es_state == 'STOPPED':
-            print('LOGGER>>> ElasticSearch exists, but stopped. Attempting to start it...')
+            logger.info('FOR_DEBUG>>> ElasticSearch exists, but stopped. Attempting to start it...')
             d.start_container(strmark='elasticsearch')
         else:
-            print('LOGGER>>> No ElasticSearch exists, creating new one.')
+            logger.info('FOR_DEBUG>>> No ElasticSearch exists, creating new one.')
             d.launch_container(strmark='elasticsearch')
 
         # --- send data from postgres to ElasticSearch
         send_data_to_es(strmark='xtremio')
+        time.sleep(5)
         send_data_to_es(strmark='isilon')
+        time.sleep(5)
 
-        # -- print out containers for checking
+        # -- finally cleaning up containers
         containers = d.get_containers(isall=True)
-
-        print(containers)
-
         for k, v in containers.items():
             if ('kibana' in k) or ('elasticsearch' in k):
                 pass
             else:
-                print('Container name: ' + k + ' / Container ID: ' + v)
+                logger.info('FOR_DEBUG>>> Container name: ' + k + ' / Container ID: ' + v)
                 d.kill_container(k.replace('smetrics_',''), isremove=True)
-        print('LOGGER>>> Cleaning up container done. Controller has done its task ...!!')
+        logger.info('FOR_DEBUG>>> Cleaning up container done. Controller has done its task ...!!')
 
     else:
-        print('LOGGER>>> Controller.py ended with some errorouns tasks...')
+        logger.error('FOR_DEBUG>>> Controller.py ended with some erroneous tasks...')
 
 
 if __name__ == '__main__':

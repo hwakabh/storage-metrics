@@ -2,14 +2,16 @@
 import pika
 import requests
 import json
-import params as param
 import psycopg2
-
+import logging
+import params as param
 
 # To hide InsecureRequesetWarning in prompt
 import urllib3
 from urllib3.exceptions import InsecureRequestWarning
 urllib3.disable_warnings(InsecureRequestWarning)
+
+logger = logging.getLogger(__name__)
 
 
 # Postgres Class to handle in each function
@@ -41,9 +43,9 @@ class Collector:
     def create_table(self, metric, columns):
         # Expected metric: capacity, quota, cpu bandwidth
         table_name = self.strmark + '_' + metric + '_table'
-        print(self.strmark.upper() + '_LOGGER>>> Creating ' + metric + ' table on Postgres ...')
+        logger.info(self.strmark.upper() + '_Collector>>> Creating ' + metric + ' table on Postgres ...')
         create_table(table_name, columns)
-        print(self.strmark.upper() + '_LOGGER>>> Creating ' + metric + ' table Done.')
+        logger.info(self.strmark.upper() + '_Collector>>> Creating ' + metric + ' table Done.')
 
     # RabbitMQ : each collector is 'Producer' and would 'publish(=Send)' message
     def send_message(self, msg):
@@ -53,24 +55,24 @@ class Collector:
             channel = connection.channel()
             # create channel to send message
             channel.queue_declare(queue=self.strmark)
-            print(self.strmark.upper() + '_LOGGER>>> Create channel ' + self.strmark + ' with RabbitMQ...')
+            logger.info(self.strmark.upper() + '_Collector>>> Create channel ' + self.strmark + ' with RabbitMQ...')
             channel.basic_publish(exchange='', routing_key=self.strmark, body=msg)
-            print(self.strmark.upper() + '_LOGGER>>> Messaage \'' + msg + '\' successfully sent to ' + self.strmark)
+            logger.info(self.strmark.upper() + '_Collector>>> Messaage \'' + msg + '\' successfully sent to ' + self.strmark)
             return_value = True
         except Exception as e:
-            print(self.strmark.upper() + '_LOGGER>>> Error when sending message ...')
-            print('Errors : ', e.args)
+            logger.error(self.strmark.upper() + '_Collector>>> Error when sending message ...')
+            logger.error('Errors : ', e.args)
         finally:
             try:
                 connection.close()
             except Exception as e:
-                print(self.strmark.upper() + '_LOGGER>>> Error when sending message ...')
-                print('Errors : ', e.args)
+                logger.error(self.strmark.upper() + '_Collector>>> Error when sending message ...')
+                logger.error('Errors : ', e.args)
         return return_value
 
     def send_data_to_postgres(self, data, data_type):
         table_name = self.strmark + '_' + data_type + '_table'
-        print(self.strmark.upper() + '_LOGGER>>> Start sending data to ' + table_name + ' ...')
+        logger.info(self.strmark.upper() + '_Collector>>> Start sending data to ' + table_name + ' ...')
         # Instantiate Postgres
         pg = Postgres(hostname=param.pg_address, port=param.pg_ports[0],
                       username=param.pg_username, password=param.pg_password, database=param.pg_database)
@@ -119,13 +121,13 @@ class Collector:
                 # Execute query
                 cur.execute(q.replace(', )', ')'))
         else:
-            print(self.strmark.upper() + '_LOGGER>>> Data-Type specified seemed to be wrong, '
+            logger.error(self.strmark.upper() + '_Collector>>> Data-Type specified seemed to be wrong, '
                                          'data-type expecting follows bellow: \n'
                                          '\t Isilon : [capacity, quota, cpu, bandwidth] \n'
                                          '\t XtremIO : [capacity, sc_performance, cl_performance] \n'
                   )
         pg.disconnect()
-        print(self.strmark.upper() + '_LOGGER>>> Sending data to ' + table_name + ' Done.')
+        logger.info(self.strmark.upper() + '_Collector>>> Sending data to ' + table_name + ' Done.')
 
 
 def create_table(name, columns):
@@ -151,21 +153,21 @@ def convert_to_json(rbody):
     try:
         js = json.loads(rbody)
     except Exception as e:
-        print('FOR_DEBUG>>> Some Error occurred when converting from String to JSON.')
-        print('Errors : ', e.args)
+        logger.error('FOR_DEBUG>>> Some Error occurred when converting from String to JSON.')
+        logger.error('Errors : ', e.args)
     return js
 
 
 def get_https_response_with_json(username, password, url):
     # URL validation
     if 'http' in url:
-        print('FOR DEBUG>>> Using HTTP/HTTPS. Checking for Secure connection or not...')
+        logger.info('FOR DEBUG>>> Using HTTP/HTTPS. Checking for Secure connection or not...')
         if 'https' in url:
-            print('FOR DEBUG>>> Using HTTPS. GET from : ' + url)
+            logger.info('FOR DEBUG>>> Using HTTPS. GET from : ' + url)
         else:
-            print('FOR DEBUG>>> Using HTTP. GET from : ' + url)
+            logger.info('FOR DEBUG>>> Using HTTP. GET from : ' + url)
     else:
-        print('FOR DEBUG>>> URL seems to be wrong with : ' + url)
+        logger.error('FOR DEBUG>>> URL seems to be wrong with : ' + url)
         raise Exception
 
     rbody = ''
@@ -173,19 +175,10 @@ def get_https_response_with_json(username, password, url):
     try:
         # verify=False for ignore SSL Certificate
         r = requests.get(url, auth=(username, password), verify=False)
-        print('FOR_DEBUG>>> Return code fine, seems that Successfully GET content.')
+        logger.info('FOR_DEBUG>>> Return code fine, seems that Successfully GET content.')
         rbody = r.text
     except Exception as e:
-        print('FOR_DEBUG>>> Some Error occurred when getting HTTP/HTTPS response.')
-        print('Errors : ', e.args)
+        logger.error('FOR_DEBUG>>> Some Error occurred when getting HTTP/HTTPS response.')
+        logger.error('Errors : ', e.args)
 
     return convert_to_json(rbody)
-
-
-def main():
-    test_collector = Collector('TEST')
-    test_collector.send_message('postgres_Start')
-
-
-if __name__ == '__main__':
-    main()

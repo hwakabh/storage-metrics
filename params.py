@@ -19,6 +19,8 @@ mq_address = '10.62.130.167'
 mq_ports = [25672, 5672, 5671, 4369, 15672]
 # mq_portmap = {25672: 32776, 5672: 32777, 5671: 32778, 4369: 32779}
 mq_portmap = {25672: 25672, 5672: 5672, 5671: 5671, 4369: 4369, 15672: 15672}
+# Retry count for consuming RabbitMQ
+mq_rc = 15
 
 # -- For ElasticSearch
 es_address = '10.62.130.167'
